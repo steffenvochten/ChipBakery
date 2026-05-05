@@ -29,6 +29,13 @@ _build_temp/
 # .NET Aspire
 appsettings.local.json
 .aspire/
+manifest.json
+
+# Aspirate (Deployment tool)
+aspirate-output/
+aspirate-state.json
+aspirate-secrets.json
+aspirate.json
 
 # JetBrains (Rider/IntelliJ)
 .idea/
