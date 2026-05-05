@@ -1,0 +1,60 @@
+## Visual Studio / .NET Core
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa]rm/
+[Aa]rm64/
+bld/
+[Bb]in/
+[Oo]bj/
+_containercache/
+_build_temp/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# User-specific project settings
+*.csproj.user
+*.sqlproj.user
+*.pubxml
+*.pubxml.user
+
+# .NET Aspire
+appsettings.local.json
+.aspire/
+
+# JetBrains (Rider/IntelliJ)
+.idea/
+*.sln.iml
+.idea.*
+
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Results of build, tests, and coverage
+[Tt]est[Rr]esults/
+*.trx
+*.md.html
+*.coverage
+*.coveragexml
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
