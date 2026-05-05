@@ -1,0 +1,262 @@
+@page "/inventory"
+@rendermode InteractiveServer
+@using ChipBakery.Shared
+@using ChipBakery.Web.Services
+@inject BakeryApiClient ApiClient
+
+<PageTitle>Inventory Management | Chip Bakery</PageTitle>
+
+<div class="container page-container">
+    <div class="header-row">
+        <h1 class="page-title">Inventory Management</h1>
+        <button class="btn btn-primary" @onclick="OpenCreateModal">
+            Add Product
+        </button>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="loading-spinner"></div>
+    }
+    else if (_inventory == null || !_inventory.Any())
+    {
+        <div class="empty-state">
+            <div class="empty-icon">📦</div>
+            <h3>No inventory items</h3>
+            <p>Add some products to your catalogue.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in _inventory)
+                    {
+                        <tr>
+                            <td><strong>@item.Name</strong></td>
+                            <td>$@item.Price.ToString("0.00")</td>
+                            <td>
+                                @if (item.Quantity <= 5)
+                                {
+                                    <span class="badge badge-cancelled">@item.Quantity left</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-completed">@item.Quantity left</span>
+                                }
+                            </td>
+                            <td class="text-right">
+                                <button class="btn btn-outline btn-sm me-2" @onclick="() => OpenEditModal(item)">Edit</button>
+                                <button class="btn btn-danger btn-sm" @onclick="() => DeleteItem(item.Id)">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@if (_isModalOpen)
+{
+    <div class="modal-backdrop">
+        <div class="modal-content">
+            <button class="modal-close" @onclick="CloseModal">×</button>
+            <h3 class="modal-title">@(_isEditMode ? "Edit Product" : "Add Product")</h3>
+            
+            <EditForm Model="_model" OnValidSubmit="SaveItem">
+                <div class="form-group">
+                    <label class="form-label" for="name">Product Name</label>
+                    <InputText id="name" class="form-control" @bind-Value="_model.Name" required />
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="price">Price ($)</label>
+                    <InputNumber id="price" class="form-control" @bind-Value="_model.Price" min="0.01" step="0.01" required />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="quantity">Stock Quantity</label>
+                    <InputNumber id="quantity" class="form-control" @bind-Value="_model.Quantity" min="0" required />
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" @onclick="CloseModal">Cancel</button>
+                    <button type="submit" class="btn btn-accent" disabled="@_isSaving">
+                        @(_isSaving ? "Saving..." : "Save Product")
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(_notificationMessage))
+{
+    <div class="notification @(_notificationIsError ? "error" : "success")">
+        @_notificationMessage
+    </div>
+}
+
+@code {
+    private List<InventoryItem>? _inventory;
+    private bool _isLoading = true;
+    
+    // Modal state
+    private bool _isModalOpen = false;
+    private bool _isEditMode = false;
+    private Guid? _editingId;
+    private InventoryModel _model = new();
+    private bool _isSaving = false;
+
+    private string _notificationMessage = "";
+    private bool _notificationIsError = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadInventory();
+    }
+
+    private async Task LoadInventory()
+    {
+        _isLoading = true;
+        try
+        {
+            _inventory = await ApiClient.GetAllInventoryAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowNotification($"Failed to load inventory: {ex.Message}", true);
+            _inventory = new();
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void OpenCreateModal()
+    {
+        _isEditMode = false;
+        _editingId = null;
+        _model = new InventoryModel { Price = 1.00m, Quantity = 10 };
+        _isModalOpen = true;
+    }
+
+    private void OpenEditModal(InventoryItem item)
+    {
+        _isEditMode = true;
+        _editingId = item.Id;
+        _model = new InventoryModel
+        {
+            Name = item.Name,
+            Price = item.Price,
+            Quantity = item.Quantity
+        };
+        _isModalOpen = true;
+    }
+
+    private void CloseModal()
+    {
+        _isModalOpen = false;
+    }
+
+    private async Task SaveItem()
+    {
+        if (_isSaving) return;
+        _isSaving = true;
+
+        try
+        {
+            if (_isEditMode && _editingId.HasValue)
+            {
+                var req = new UpdateInventoryRequest(_model.Name, _model.Price, _model.Quantity);
+                var result = await ApiClient.UpdateInventoryItemAsync(_editingId.Value, req);
+                if (result != null)
+                {
+                    ShowNotification("Product updated successfully.", false);
+                    CloseModal();
+                    await LoadInventory();
+                }
+                else
+                {
+                    ShowNotification("Failed to update product.", true);
+                }
+            }
+            else
+            {
+                var req = new CreateInventoryRequest(_model.Name, _model.Price, _model.Quantity);
+                var result = await ApiClient.CreateInventoryItemAsync(req);
+                if (result != null)
+                {
+                    ShowNotification("Product added successfully.", false);
+                    CloseModal();
+                    await LoadInventory();
+                }
+                else
+                {
+                    ShowNotification("Failed to add product.", true);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowNotification($"Save failed: {ex.Message}", true);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private async Task DeleteItem(Guid id)
+    {
+        try
+        {
+            var success = await ApiClient.DeleteInventoryItemAsync(id);
+            if (success)
+            {
+                ShowNotification("Product deleted.", false);
+                await LoadInventory();
+            }
+            else
+            {
+                ShowNotification("Failed to delete product.", true);
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowNotification($"Delete failed: {ex.Message}", true);
+        }
+    }
+
+    private void ShowNotification(string message, bool isError)
+    {
+        _notificationMessage = message;
+        _notificationIsError = isError;
+        StateHasChanged();
+        
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(3000);
+            _notificationMessage = "";
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private class InventoryModel
+    {
+        public string Name { get; set; } = "";
+        public decimal Price { get; set; }
+        public int Quantity { get; set; }
+    }
+}

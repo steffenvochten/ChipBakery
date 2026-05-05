@@ -1,0 +1,179 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Inventory.Service — HTTP Test File
+# Run via: VS Code REST Client extension  |  Visual Studio HTTP Files
+#
+# NOTE: The service needs a Postgres database to be running.
+# Easiest way: start the full stack with the Aspire AppHost.
+#   dotnet run --project ChipBakery.AppHost
+# Then use the port shown in the Aspire dashboard for inventory-service,
+# or override the variable below to match.
+# ─────────────────────────────────────────────────────────────────────────────
+
+@host = https://localhost:7287
+
+# Stable seed GUIDs (from InventoryItemConfiguration.cs)
+@croissantId = d3b4e7e4-23fb-47df-bc6c-18a0ea12cb24
+@sourdoughId = f2e1a3b4-64df-41ca-87ab-51b1f2e2ac89
+@eclairId    = e8a21d5a-1c7c-47db-93ab-62c1e7f3d91b
+
+# ─── 1. GET ALL ITEMS ────────────────────────────────────────────────────────
+# Returns every item regardless of stock level.
+# Expected: 200 OK — array of 3 seeded items
+
+GET {{host}}/api/inventory
+Accept: application/json
+
+###
+
+# ─── 2. GET AVAILABLE ITEMS ──────────────────────────────────────────────────
+# Returns only items with Quantity > 0. Used by the Blazor storefront.
+# Returns ChipBakery.Shared.ProductItem shape (backward-compatible).
+# Expected: 200 OK — array of ProductItem
+
+GET {{host}}/api/inventory/available
+Accept: application/json
+
+###
+
+# ─── 3. GET ITEM BY ID (happy path) ─────────────────────────────────────────
+# Expected: 200 OK — single InventoryItemDto
+
+GET {{host}}/api/inventory/{{croissantId}}
+Accept: application/json
+
+###
+
+# ─── 4. GET ITEM BY ID (not found) ───────────────────────────────────────────
+# Expected: 404 Not Found — ProblemDetails with type "not-found"
+
+GET {{host}}/api/inventory/00000000-0000-0000-0000-000000000000
+Accept: application/json
+
+###
+
+# ─── 5. CREATE ITEM (happy path) ─────────────────────────────────────────────
+# Expected: 201 Created — InventoryItemDto, Location header pointing to new item
+
+POST {{host}}/api/inventory
+Content-Type: application/json
+
+{
+  "name": "Almond Croissant",
+  "price": 4.75,
+  "quantity": 30
+}
+
+###
+
+# ─── 6. CREATE ITEM (validation failure) ─────────────────────────────────────
+# Empty name + negative price → FluentValidation kicks in.
+# Expected: 400 Bad Request — ProblemDetails with type "validation" listing errors
+
+POST {{host}}/api/inventory
+Content-Type: application/json
+
+{
+  "name": "",
+  "price": -1.00,
+  "quantity": 10
+}
+
+###
+
+# ─── 7. UPDATE ITEM (happy path) ─────────────────────────────────────────────
+# Update the Sourdough Loaf price and bump stock.
+# Expected: 200 OK — updated InventoryItemDto
+
+PUT {{host}}/api/inventory/{{sourdoughId}}
+Content-Type: application/json
+
+{
+  "name": "Sourdough Loaf (Large)",
+  "price": 7.50,
+  "quantity": 75
+}
+
+###
+
+# ─── 8. UPDATE ITEM (not found) ──────────────────────────────────────────────
+# Expected: 404 Not Found — ProblemDetails
+
+PUT {{host}}/api/inventory/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+
+{
+  "name": "Ghost Item",
+  "price": 1.00,
+  "quantity": 1
+}
+
+###
+
+# ─── 9. DEDUCT STOCK (happy path) ────────────────────────────────────────────
+# Deduct 5 Chocolate Éclairs.
+# Expected: 200 OK — empty body
+# Side-effect: MockEventPublisher logs a StockDeductedEvent to the console.
+
+POST {{host}}/api/inventory/deduct
+Content-Type: application/json
+
+{
+  "productId": "{{eclairId}}",
+  "quantity": 5
+}
+
+###
+
+# ─── 10. DEDUCT STOCK (insufficient stock) ───────────────────────────────────
+# The Éclair only has 25 in stock (or 20 after request #9).
+# Request 999 units to trigger InsufficientStockException.
+# Expected: 409 Conflict — ProblemDetails with type "insufficient-stock"
+
+POST {{host}}/api/inventory/deduct
+Content-Type: application/json
+
+{
+  "productId": "{{eclairId}}",
+  "quantity": 999
+}
+
+###
+
+# ─── 11. DEDUCT STOCK (validation failure) ───────────────────────────────────
+# Quantity of 0 is invalid per DeductStockValidator.
+# Expected: 400 Bad Request — ProblemDetails with type "validation"
+
+POST {{host}}/api/inventory/deduct
+Content-Type: application/json
+
+{
+  "productId": "{{croissantId}}",
+  "quantity": 0
+}
+
+###
+
+# ─── 12. DELETE ITEM (happy path) ────────────────────────────────────────────
+# Delete the Butter Croissant.
+# Expected: 204 No Content
+# Side-effect: MockEventPublisher logs an InventoryItemDeletedEvent.
+
+DELETE {{host}}/api/inventory/{{croissantId}}
+
+###
+
+# ─── 13. DELETE ITEM (not found — re-deleting) ───────────────────────────────
+# Run after request #12 — item is already gone.
+# Expected: 404 Not Found — ProblemDetails
+
+DELETE {{host}}/api/inventory/{{croissantId}}
+
+###
+
+# ─── 14. HEALTH CHECK ────────────────────────────────────────────────────────
+# Aspire default endpoint — confirms service is alive.
+# Expected: 200 OK — "Healthy"
+
+GET {{host}}/health
+
+###

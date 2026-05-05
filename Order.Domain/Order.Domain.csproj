@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!--
+    IEventPublisher and OrderStatus live in ChipBakery.Shared (shared across all services).
+    This is the only external dependency for the Domain layer.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\ChipBakery.Shared\ChipBakery.Shared.csproj" />
+  </ItemGroup>
+</Project>

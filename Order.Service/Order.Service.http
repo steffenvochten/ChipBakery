@@ -1,0 +1,85 @@
+@host = https://localhost:7127
+
+# Stable seed GUIDs from BakeryOrderConfiguration.cs seed data
+@seedOrder1Id = a1b2c3d4-1111-2222-3333-444455556666
+@seedOrder2Id = b2c3d4e5-2222-3333-4444-555566667777
+@seedOrder3Id = c3d4e5f6-3333-4444-5555-666677778888
+
+# Inventory seed product GUIDs (must match Inventory seed data)
+@butterCroissantId = d3b4e7e4-23fb-47df-bc6c-18a0ea12cb24
+@sourdoughLoafId   = f2e1a3b4-64df-41ca-87ab-51b1f2e2ac89
+@chocolateEclairId = e8a21d5a-1c7c-47db-93ab-62c1e7f3d91b
+
+###
+# GET all orders (should return 3 seeded orders, newest first)
+# Expected: 200 OK — array of OrderDto
+GET {{host}}/api/orders
+Accept: application/json
+
+###
+# GET single order by ID (seeded — Completed)
+# Expected: 200 OK — Alice Baker's Butter Croissant order
+GET {{host}}/api/orders/{{seedOrder1Id}}
+Accept: application/json
+
+###
+# GET single order — not found
+# Expected: 404 Not Found — ProblemDetails { title: "Order Not Found" }
+GET {{host}}/api/orders/00000000-0000-0000-0000-000000000000
+Accept: application/json
+
+###
+# POST place a new order (happy path)
+# Expected: 201 Created — OrderResponse { success: true, orderId: <new-guid> }
+POST {{host}}/api/orders
+Content-Type: application/json
+
+{
+  "productId": "{{butterCroissantId}}",
+  "quantity": 2,
+  "customerName": "Test Customer"
+}
+
+###
+# POST place order — validation failure (quantity = 0)
+# Expected: 400 Bad Request — ProblemDetails { title: "Validation Failed" }
+POST {{host}}/api/orders
+Content-Type: application/json
+
+{
+  "productId": "{{butterCroissantId}}",
+  "quantity": 0,
+  "customerName": "Test Customer"
+}
+
+###
+# POST place order — validation failure (empty customer name)
+# Expected: 400 Bad Request — ProblemDetails { title: "Validation Failed" }
+POST {{host}}/api/orders
+Content-Type: application/json
+
+{
+  "productId": "{{butterCroissantId}}",
+  "quantity": 1,
+  "customerName": ""
+}
+
+###
+# PUT cancel a Placed order (seed order 2 is Placed status)
+# Expected: 204 No Content
+PUT {{host}}/api/orders/{{seedOrder2Id}}/cancel
+
+###
+# PUT cancel an already Completed order
+# Expected: 409 Conflict — ProblemDetails { title: "Operation Not Allowed" }
+PUT {{host}}/api/orders/{{seedOrder1Id}}/cancel
+
+###
+# PUT cancel an already Cancelled order
+# Expected: 409 Conflict — ProblemDetails { title: "Operation Not Allowed" }
+PUT {{host}}/api/orders/{{seedOrder3Id}}/cancel
+
+###
+# PUT cancel — order not found
+# Expected: 404 Not Found — ProblemDetails { title: "Order Not Found" }
+PUT {{host}}/api/orders/00000000-0000-0000-0000-000000000000/cancel

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Aspire service defaults (health checks, telemetry, service discovery) -->
+    <ProjectReference Include="..\ChipBakery.ServiceDefaults\ChipBakery.ServiceDefaults.csproj" />
+    <!-- ChipBakery.Shared — OrderRequest/OrderResponse for Blazor compatibility at API boundary -->
+    <ProjectReference Include="..\ChipBakery.Shared\ChipBakery.Shared.csproj" />
+    <!-- Clean Architecture layers -->
+    <ProjectReference Include="..\Order.Domain\Order.Domain.csproj" />
+    <ProjectReference Include="..\Order.Application\Order.Application.csproj" />
+    <ProjectReference Include="..\Order.Infrastructure\Order.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

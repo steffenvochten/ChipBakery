@@ -1,0 +1,204 @@
+@page "/"
+@rendermode InteractiveServer
+@using ChipBakery.Shared
+@using ChipBakery.Web.Services
+@inject BakeryApiClient ApiClient
+
+<PageTitle>Chip Bakery | Artisanal Excellence</PageTitle>
+
+<div class="hero-section">
+    <div class="hero-content">
+        <h1 class="gradient-text">Fresh From The Oven</h1>
+        <p class="subtitle">Artisanal breads and pastries, baked daily with passion.</p>
+    </div>
+</div>
+
+<div class="container storefront">
+    <h2 class="section-title">Today's Menu</h2>
+
+    @if (_isLoading)
+    {
+        <div class="loading-spinner"></div>
+    }
+    else if (_products == null || !_products.Any())
+    {
+        <div class="empty-state">
+            <h3>Looks like we're sold out!</h3>
+            <p>Check back tomorrow for fresh bakes.</p>
+        </div>
+    }
+    else
+    {
+        <div class="product-grid">
+            @foreach (var product in _products)
+            {
+                <div class="product-card">
+                    <div class="product-image-wrapper">
+                        <img src="@GetImageForProduct(product.Name)" alt="@product.Name" class="product-image" />
+                    </div>
+                    <div class="product-info">
+                        <h3>@product.Name</h3>
+                        <div class="price-row">
+                            <span class="price">$@product.Price.ToString("0.00")</span>
+                            @if(product.AvailableQuantity > 0)
+                            {
+                                <span class="badge badge-completed">@product.AvailableQuantity in stock</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-cancelled">Sold out</span>
+                            }
+                        </div>
+                        <button class="btn btn-primary w-100" 
+                                @onclick="() => OpenOrderModal(product)" 
+                                disabled="@(product.AvailableQuantity <= 0)">
+                            Order Now
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@if (_selectedProduct != null)
+{
+    <div class="modal-backdrop">
+        <div class="modal-content">
+            <button class="modal-close" @onclick="CloseOrderModal">×</button>
+            <h3 class="modal-title">Order @_selectedProduct.Name</h3>
+            
+            <EditForm Model="_orderModel" OnValidSubmit="PlaceOrder">
+                <div class="form-group">
+                    <label class="form-label" for="customerName">Your Name</label>
+                    <InputText id="customerName" class="form-control" @bind-Value="_orderModel.CustomerName" required />
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="quantity">Quantity</label>
+                    <InputNumber id="quantity" class="form-control" @bind-Value="_orderModel.Quantity" min="1" max="@_selectedProduct.AvailableQuantity" required />
+                </div>
+                
+                <div class="order-total">
+                    <span>Total:</span>
+                    <strong>$@((_orderModel.Quantity * _selectedProduct.Price).ToString("0.00"))</strong>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" @onclick="CloseOrderModal">Cancel</button>
+                    <button type="submit" class="btn btn-accent" disabled="@_isOrdering">
+                        @(_isOrdering ? "Placing Order..." : "Confirm Order")
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(_notificationMessage))
+{
+    <div class="notification @(_notificationIsError ? "error" : "success")">
+        @_notificationMessage
+    </div>
+}
+
+@code {
+    private List<ProductItem>? _products;
+    private bool _isLoading = true;
+    private ProductItem? _selectedProduct;
+    private OrderModel _orderModel = new();
+    private bool _isOrdering = false;
+    private string _notificationMessage = "";
+    private bool _notificationIsError = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts()
+    {
+        _isLoading = true;
+        try
+        {
+            _products = await ApiClient.GetAvailableProductsAsync();
+        }
+        catch (Exception)
+        {
+            ShowNotification("Failed to load products.", true);
+            _products = new();
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private string GetImageForProduct(string name)
+    {
+        if (name.Contains("Croissant", StringComparison.OrdinalIgnoreCase)) return "/images/butter_croissant.png";
+        if (name.Contains("Sourdough", StringComparison.OrdinalIgnoreCase)) return "/images/sourdough_loaf.png";
+        if (name.Contains("Eclair") || name.Contains("Éclair")) return "/images/chocolate_eclair.png";
+        return "/images/placeholder_pastry.png"; // Fallback image
+    }
+
+    private void OpenOrderModal(ProductItem product)
+    {
+        _selectedProduct = product;
+        _orderModel = new OrderModel { Quantity = 1 };
+    }
+
+    private void CloseOrderModal()
+    {
+        _selectedProduct = null;
+    }
+
+    private async Task PlaceOrder()
+    {
+        if (_selectedProduct == null || _isOrdering) return;
+        
+        _isOrdering = true;
+        
+        try
+        {
+            var request = new OrderRequest(_selectedProduct.Id, _orderModel.Quantity, _orderModel.CustomerName);
+            var response = await ApiClient.PlaceOrderAsync(request);
+
+            ShowNotification(response.Message, !response.Success);
+            
+            if (response.Success)
+            {
+                CloseOrderModal();
+                await LoadProducts(); // Refresh stock
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowNotification($"Order failed: {ex.Message}", true);
+        }
+        finally
+        {
+            _isOrdering = false;
+        }
+    }
+    
+    private void ShowNotification(string message, bool isError)
+    {
+        _notificationMessage = message;
+        _notificationIsError = isError;
+        StateHasChanged();
+        
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(4000);
+            _notificationMessage = "";
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private class OrderModel
+    {
+        public string CustomerName { get; set; } = "";
+        public int Quantity { get; set; } = 1;
+    }
+}

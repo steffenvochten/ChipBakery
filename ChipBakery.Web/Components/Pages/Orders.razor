@@ -1,0 +1,168 @@
+@page "/orders"
+@rendermode InteractiveServer
+@using ChipBakery.Shared
+@using ChipBakery.Web.Services
+@inject BakeryApiClient ApiClient
+
+<PageTitle>Order History | Chip Bakery</PageTitle>
+
+<div class="container page-container">
+    <div class="header-row">
+        <h1 class="page-title">Order History</h1>
+        <button class="btn btn-outline" @onclick="LoadOrders" disabled="@_isLoading">
+            Refresh
+        </button>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="loading-spinner"></div>
+    }
+    else if (_orders == null || !_orders.Any())
+    {
+        <div class="empty-state">
+            <div class="empty-icon">🧾</div>
+            <h3>No orders yet</h3>
+            <p>Your order history will appear here once you place an order.</p>
+            <a href="/" class="btn btn-primary mt-3">Go to Storefront</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Product</th>
+                        <th>Qty</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in _orders)
+                    {
+                        <tr>
+                            <td class="id-col" title="@order.Id">@order.Id.ToString()[..8]...</td>
+                            <td>@order.OrderDate.ToString("g")</td>
+                            <td>@order.CustomerName</td>
+                            <td>@GetProductName(order.ProductId)</td>
+                            <td>@order.Quantity</td>
+                            <td class="price-col">$@order.TotalPrice.ToString("0.00")</td>
+                            <td>
+                                <span class="badge badge-@order.Status.ToString().ToLower()">@order.Status</span>
+                            </td>
+                            <td>
+                                @if (order.Status == OrderStatus.Placed)
+                                {
+                                    <button class="btn btn-danger btn-sm" @onclick="() => CancelOrder(order.Id)" disabled="@_isCancelling">
+                                        Cancel
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    
+    @if (!string.IsNullOrEmpty(_notificationMessage))
+    {
+        <div class="notification @(_notificationIsError ? "error" : "success")">
+            @_notificationMessage
+        </div>
+    }
+</div>
+
+@code {
+    private List<OrderItem>? _orders;
+    private Dictionary<Guid, string> _productNames = new();
+    private bool _isLoading = true;
+    private bool _isCancelling = false;
+    private string _notificationMessage = "";
+    private bool _notificationIsError = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrders();
+    }
+
+    private async Task LoadOrders()
+    {
+        _isLoading = true;
+        try
+        {
+            _orders = await ApiClient.GetAllOrdersAsync();
+            // Fetch products to map names if we haven't already
+            if (!_productNames.Any())
+            {
+                var inventory = await ApiClient.GetAllInventoryAsync();
+                foreach (var p in inventory)
+                {
+                    _productNames[p.Id] = p.Name;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowNotification($"Failed to load orders: {ex.Message}", true);
+            _orders = new();
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private string GetProductName(Guid id)
+    {
+        return _productNames.TryGetValue(id, out var name) ? name : "Unknown Product";
+    }
+
+    private async Task CancelOrder(Guid id)
+    {
+        if (_isCancelling) return;
+        _isCancelling = true;
+
+        try
+        {
+            var success = await ApiClient.CancelOrderAsync(id);
+            if (success)
+            {
+                ShowNotification("Order cancelled successfully.", false);
+                await LoadOrders(); // Refresh table
+            }
+            else
+            {
+                ShowNotification("Failed to cancel order.", true);
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowNotification($"Error cancelling order: {ex.Message}", true);
+        }
+        finally
+        {
+            _isCancelling = false;
+        }
+    }
+
+    private void ShowNotification(string message, bool isError)
+    {
+        _notificationMessage = message;
+        _notificationIsError = isError;
+        StateHasChanged();
+        
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(3000);
+            _notificationMessage = "";
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+}

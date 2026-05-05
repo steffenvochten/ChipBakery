@@ -1,0 +1,27 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.2.4">
+
+  <ItemGroup>
+    <ProjectReference Include="..\ChipBakery.Web\ChipBakery.Web.csproj" />
+    <ProjectReference Include="..\Order.Service\Order.Service.csproj" />
+    <ProjectReference Include="..\Warehouse.Service\Warehouse.Service.csproj" />
+    <ProjectReference Include="..\Supplier.Service\Supplier.Service.csproj" />
+    <ProjectReference Include="..\Inventory.Service\Inventory.Service.csproj" />
+    <ProjectReference Include="..\Loyalty.Service\Loyalty.Service.csproj" />
+    <ProjectReference Include="..\Production.Service\Production.Service.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.2.4" />
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" Version="13.2.4" />
+    <PackageReference Include="Aspire.Hosting.Redis" Version="13.2.4" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>5ba58344-0598-48fb-afc9-db96a1aa6163</UserSecretsId>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,285 @@
+/* ChipBakery Design System */
+
+:root {
+    /* Color Palette - Light Theme */
+    --primary: #1e3a5f;
+    --primary-light: #2d5a8e;
+    --accent: #e8722a;
+    --accent-light: #f5a623;
+    
+    --surface: #ffffff;
+    --surface-alt: #f8f6f3;
+    --surface-hover: #f1ede8;
+    
+    --text: #2c3140;
+    --text-muted: #6b7280;
+    --border: rgba(0,0,0,0.08);
+    
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --info: #3b82f6;
+
+    /* Status Badge Colors */
+    --status-placed-bg: #dbeafe;
+    --status-placed-text: #1e40af;
+    --status-processing-bg: #fef3c7;
+    --status-processing-text: #92400e;
+    --status-completed-bg: #d1fae5;
+    --status-completed-text: #065f46;
+    --status-cancelled-bg: #fee2e2;
+    --status-cancelled-text: #991b1b;
+}
+
+[data-theme='dark'] {
+    /* Color Palette - Dark Theme */
+    --primary: #3b6fa0;
+    --primary-light: #4d8bc4;
+    --accent: #f09050;
+    --accent-light: #f5b84a;
+    
+    --surface: #1a1d23;
+    --surface-alt: #111317;
+    --surface-hover: #22262e;
+    
+    --text: #e8e6e1;
+    --text-muted: #9ca3af;
+    --border: rgba(255,255,255,0.08);
+
+    /* Status Badge Colors - Dark */
+    --status-placed-bg: rgba(59, 130, 246, 0.2);
+    --status-placed-text: #60a5fa;
+    --status-processing-bg: rgba(245, 158, 11, 0.2);
+    --status-processing-text: #fbbf24;
+    --status-completed-bg: rgba(16, 185, 129, 0.2);
+    --status-completed-text: #34d399;
+    --status-cancelled-bg: rgba(239, 68, 68, 0.2);
+    --status-cancelled-text: #f87171;
+}
+
+/* Fallback for OS preference if JS hasn't run */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+        --primary: #3b6fa0;
+        --primary-light: #4d8bc4;
+        --accent: #f09050;
+        --accent-light: #f5b84a;
+        --surface: #1a1d23;
+        --surface-alt: #111317;
+        --surface-hover: #22262e;
+        --text: #e8e6e1;
+        --text-muted: #9ca3af;
+        --border: rgba(255,255,255,0.08);
+
+        --status-placed-bg: rgba(59, 130, 246, 0.2);
+        --status-placed-text: #60a5fa;
+        --status-processing-bg: rgba(245, 158, 11, 0.2);
+        --status-processing-text: #fbbf24;
+        --status-completed-bg: rgba(16, 185, 129, 0.2);
+        --status-completed-text: #34d399;
+        --status-cancelled-bg: rgba(239, 68, 68, 0.2);
+        --status-cancelled-text: #f87171;
+    }
+}
+
+/* Global Resets */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--surface-alt);
+    color: var(--text);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    margin-top: 0;
+    color: var(--text);
+}
+
+a {
+    color: var(--primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: var(--primary-light);
+}
+
+/* Utilities */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: var(--primary-light);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-accent {
+    background-color: var(--accent);
+    color: white;
+}
+
+.btn-accent:hover:not(:disabled) {
+    background-color: var(--accent-light);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(232, 114, 42, 0.3);
+}
+
+.btn-outline {
+    background-color: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.btn-outline:hover:not(:disabled) {
+    background-color: var(--surface-hover);
+}
+
+.btn-danger {
+    background-color: transparent;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+}
+
+.btn-danger:hover:not(:disabled) {
+    background-color: var(--danger);
+    color: white;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Form Inputs */
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    color: var(--text);
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.2);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+/* Table */
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background-color: var(--surface);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--border);
+}
+
+.table th, .table td {
+    padding: 1rem 1.5rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.table th {
+    background-color: var(--surface-hover);
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+}
+
+.table tr:last-child td {
+    border-bottom: none;
+}
+
+.table tbody tr:hover {
+    background-color: var(--surface-hover);
+}
+
+/* Badges */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.badge-placed { background-color: var(--status-placed-bg); color: var(--status-placed-text); }
+.badge-processing { background-color: var(--status-processing-bg); color: var(--status-processing-text); }
+.badge-completed { background-color: var(--status-completed-bg); color: var(--status-completed-text); }
+.badge-cancelled { background-color: var(--status-cancelled-bg); color: var(--status-cancelled-text); }
+
+/* Blazor Error UI */
+#blazor-error-ui {
+    background: var(--danger);
+    color: white;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}

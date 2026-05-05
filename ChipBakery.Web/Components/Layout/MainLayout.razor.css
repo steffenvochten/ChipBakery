@@ -1,0 +1,35 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.top-navbar {
+    background: rgba(var(--surface-rgb), 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 1rem 0;
+}
+
+/* Need to define surface-rgb for the rgba backdrop to work. Since we didn't, we can just use the surface color or add it. Let's use surface directly for now. */
+.top-navbar {
+    background-color: var(--surface);
+}
+
+.main-content {
+    flex: 1;
+    padding: 2rem 0;
+}
+
+.footer {
+    background-color: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 2rem 0;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
