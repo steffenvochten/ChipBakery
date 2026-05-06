@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --surface: #fffbeb; /* bakery-cream */
+    --surface-alt: #fefce8; /* bakery-pastel-yellow */
+    --text: #451a03; /* stone-900 / dark brown */
+    --text-muted: #78350f; /* bakery-crust */
+    --border: rgba(120, 53, 15, 0.1);
+  }
+
+  [data-theme='dark'] {
+    --surface: #1c1917; /* stone-900 */
+    --surface-alt: #0c0a09; /* stone-950 */
+    --text: #fef3c7; /* bakery-dough */
+    --text-muted: #d97706; /* amber-600 */
+    --border: rgba(251, 191, 36, 0.1);
+  }
+
+  html, body {
+    @apply m-0 p-0 font-sans transition-colors duration-300 antialiased;
+    background-color: var(--surface-alt);
+    color: var(--text);
+  }
+
+  /* Cute bakery texture background */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2378350f' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM34 4V0h-2v4h-4v2h4v4h2V6h4V4h-4zM4 4V0H2v4H0v2h4v4h2V6h4V4H4z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  [data-theme='dark'] body::before {
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23fef3c7' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM34 4V0h-2v4h-4v2h4v4h2V6h4V4h-4zM4 4V0H2v4H0v2h4v4h2V6h4V4H4z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif font-bold mt-0 leading-tight;
+    color: var(--text);
+  }
+}
+
+@layer components {
+  /* Cute modern buttons */
+  .btn {
+    @apply inline-flex items-center justify-center px-6 py-2.5 font-sans font-bold text-sm rounded-2xl border-none cursor-pointer transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95;
+  }
+
+  .btn-primary {
+    @apply bg-bakery-crust text-bakery-dough shadow-sm hover:bg-stone-900 hover:shadow-md hover:-translate-y-0.5;
+  }
+
+  .btn-accent {
+    @apply bg-amber-500 text-stone-900 shadow-sm hover:bg-amber-400 hover:shadow-md hover:-translate-y-0.5;
+  }
+
+  .btn-outline {
+    @apply bg-transparent border border-bakery-crust/20 text-bakery-crust hover:bg-bakery-crust/5;
+  }
+
+  .btn-danger {
+    @apply bg-transparent border border-red-200 text-red-600 hover:bg-red-50;
+  }
+
+  /* Minimal inputs */
+  .form-control {
+    @apply w-full px-4 py-2.5 font-sans text-sm rounded-xl transition-all duration-300 border border-bakery-crust/10 bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-bakery-crust/20 focus:border-bakery-crust/30;
+    color: var(--text);
+  }
+
+  .form-label {
+    @apply block mb-1.5 font-bold text-xs uppercase tracking-wider opacity-70;
+    color: var(--text);
+  }
+
+  /* Glassmorphism containers */
+  .glass-card {
+    @apply bg-white/40 dark:bg-stone-900/40 backdrop-blur-md border border-white/20 dark:border-white/5 rounded-3xl shadow-sm;
+  }
+
+  /* Status Badges */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-[0.7rem] font-bold uppercase tracking-widest;
+  }
+}

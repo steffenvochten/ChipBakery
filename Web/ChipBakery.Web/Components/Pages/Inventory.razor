@@ -6,92 +6,122 @@
 
 <PageTitle>Inventory Management | Chip Bakery</PageTitle>
 
-<div class="container page-container">
-    <div class="header-row">
-        <h1 class="page-title">Inventory Management</h1>
-        <button class="btn btn-primary" @onclick="OpenCreateModal">
-            Add Product
+<div class="space-y-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-4xl font-serif font-black text-bakery-crust dark:text-amber-500">Inventory</h1>
+            <p class="text-stone-500 font-medium">Manage your artisanal product catalog.</p>
+        </div>
+        <button class="btn btn-primary shadow-lg shadow-bakery-crust/20" @onclick="OpenCreateModal">
+            <span class="text-lg mr-2">+</span> Add Product
         </button>
     </div>
 
     @if (_isLoading)
     {
-        <div class="loading-spinner"></div>
+        <div class="space-y-4">
+            @for(int i=0; i<5; i++) {
+                <div class="glass-card h-20 animate-pulse"></div>
+            }
+        </div>
     }
     else if (_inventory == null || !_inventory.Any())
     {
-        <div class="empty-state">
-            <div class="empty-icon">📦</div>
-            <h3>No inventory items</h3>
-            <p>Add some products to your catalogue.</p>
+        <div class="glass-card p-16 text-center">
+            <div class="text-6xl mb-6">📦</div>
+            <h3 class="text-2xl font-serif font-black mb-2">No inventory items</h3>
+            <p class="text-stone-500">Add some products to your catalogue to get started.</p>
         </div>
     }
     else
     {
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Product Name</th>
-                        <th>Price</th>
-                        <th>Quantity</th>
-                        <th class="text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in _inventory)
-                    {
-                        <tr>
-                            <td><strong>@item.Name</strong></td>
-                            <td>$@item.Price.ToString("0.00")</td>
-                            <td>
-                                @if (item.Quantity <= 5)
-                                {
-                                    <span class="badge badge-cancelled">@item.Quantity left</span>
-                                }
-                                else
-                                {
-                                    <span class="badge badge-completed">@item.Quantity left</span>
-                                }
-                            </td>
-                            <td class="text-right">
-                                <button class="btn btn-outline btn-sm me-2" @onclick="() => OpenEditModal(item)">Edit</button>
-                                <button class="btn btn-danger btn-sm" @onclick="() => DeleteItem(item.Id)">Delete</button>
-                            </td>
+        <div class="glass-card overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-bakery-crust/5 border-b border-bakery-crust/10">
+                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60">Product Name</th>
+                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60">Price</th>
+                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60">Stock Status</th>
+                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60 text-right">Actions</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody class="divide-y divide-bakery-crust/5">
+                        @foreach (var item in _inventory)
+                        {
+                            <tr class="hover:bg-bakery-crust/5 transition-colors group">
+                                <td class="px-6 py-4">
+                                    <div class="font-bold text-stone-900 dark:text-stone-100">@item.Name</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm font-medium opacity-80">$@item.Price.ToString("0.00")</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    @if (item.Quantity <= 5)
+                                    {
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-[0.7rem] font-black uppercase tracking-widest">
+                                            Low: @item.Quantity left
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[0.7rem] font-black uppercase tracking-widest">
+                                            @item.Quantity in stock
+                                        </span>
+                                    }
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex justify-end gap-2">
+                                        <button class="w-8 h-8 flex items-center justify-center rounded-xl bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="Edit" @onclick="() => OpenEditModal(item)">
+                                            ✎
+                                        </button>
+                                        <button class="w-8 h-8 flex items-center justify-center rounded-xl bg-red-100 text-red-700 hover:bg-red-500 hover:text-white transition-all shadow-sm" title="Delete" @onclick="() => DeleteItem(item.Id)">
+                                            ×
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     }
 </div>
 
 @if (_isModalOpen)
 {
-    <div class="modal-backdrop">
-        <div class="modal-content">
-            <button class="modal-close" @onclick="CloseModal">×</button>
-            <h3 class="modal-title">@(_isEditMode ? "Edit Product" : "Add Product")</h3>
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-stone-950/40 backdrop-blur-sm" @onclick="CloseModal"></div>
+        <div class="relative glass-card w-full max-w-md p-8 shadow-2xl animate-in fade-in zoom-in duration-300">
+            <button class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-bakery-crust/5 transition-colors text-2xl" @onclick="CloseModal">×</button>
             
-            <EditForm Model="_model" OnValidSubmit="SaveItem">
+            <div class="mb-8">
+                <span class="text-xs font-black uppercase tracking-widest text-bakery-crust dark:text-amber-500 mb-2 block">Management</span>
+                <h3 class="text-3xl font-serif font-black">@(_isEditMode ? "Edit Product" : "Add Product")</h3>
+            </div>
+            
+            <EditForm Model="_model" OnValidSubmit="SaveItem" class="space-y-6">
                 <div class="form-group">
                     <label class="form-label" for="name">Product Name</label>
-                    <InputText id="name" class="form-control" @bind-Value="_model.Name" required />
+                    <InputText id="name" class="form-control" @bind-Value="_model.Name" placeholder="e.g. Butter Croissant" required />
                 </div>
                 
-                <div class="form-group">
-                    <label class="form-label" for="price">Price ($)</label>
-                    <InputNumber id="price" class="form-control" @bind-Value="_model.Price" min="0.01" step="0.01" required />
-                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label" for="price">Price ($)</label>
+                        <InputNumber id="price" class="form-control" @bind-Value="_model.Price" min="0.01" step="0.01" required />
+                    </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="quantity">Stock Quantity</label>
-                    <InputNumber id="quantity" class="form-control" @bind-Value="_model.Quantity" min="0" required />
+                    <div class="form-group">
+                        <label class="form-label" for="quantity">Stock</label>
+                        <InputNumber id="quantity" class="form-control" @bind-Value="_model.Quantity" min="0" required />
+                    </div>
                 </div>
                 
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-outline" @onclick="CloseModal">Cancel</button>
-                    <button type="submit" class="btn btn-accent" disabled="@_isSaving">
+                <div class="flex gap-3 pt-4">
+                    <button type="button" class="btn btn-outline flex-1" @onclick="CloseModal">Cancel</button>
+                    <button type="submit" class="btn btn-accent flex-1 shadow-lg shadow-amber-500/20" disabled="@_isSaving">
                         @(_isSaving ? "Saving..." : "Save Product")
                     </button>
                 </div>
@@ -102,8 +132,11 @@
 
 @if (!string.IsNullOrEmpty(_notificationMessage))
 {
-    <div class="notification @(_notificationIsError ? "error" : "success")">
-        @_notificationMessage
+    <div class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] animate-in slide-in-from-bottom-8 duration-500">
+        <div class="px-6 py-3 rounded-2xl shadow-xl backdrop-blur-md flex items-center gap-3 @(_notificationIsError ? "bg-red-500 text-white" : "bg-bakery-crust text-bakery-dough")">
+            <span class="text-lg">@(_notificationIsError ? "⚠" : "✨")</span>
+            <span class="font-bold text-sm tracking-tight">@_notificationMessage</span>
+        </div>
     </div>
 }
 

@@ -1,25 +1,35 @@
 @inherits LayoutComponentBase
 
-<div class="page">
-    <header class="top-navbar">
-        <div class="container">
-            <NavMenu />
+<div class="min-h-screen flex flex-col">
+    <header class="sticky top-0 z-50 py-4 px-4 sm:px-8">
+        <div class="max-w-6xl mx-auto">
+            <div class="glass-card px-6 py-2">
+                <NavMenu />
+            </div>
         </div>
     </header>
 
-    <main class="main-content">
-        @Body
+    <main class="flex-1 py-8 sm:py-12">
+        <div class="max-w-6xl mx-auto px-4 sm:px-8">
+            @Body
+        </div>
     </main>
 
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; @DateTime.Now.Year Chip Bakery. Artisanal Excellence.</p>
+    <footer class="py-12 border-t border-bakery-crust/5">
+        <div class="max-w-6xl mx-auto px-8 text-center">
+            <p class="text-stone-400 dark:text-stone-600 text-sm font-medium">
+                &copy; @DateTime.Now.Year Chip Bakery. <span class="italic">Artisanal Excellence since 2024.</span>
+            </p>
         </div>
     </footer>
 </div>
 
 <div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+    <div class="flex items-center justify-between gap-4">
+        <span>An unhandled error has occurred.</span>
+        <div class="flex items-center gap-3">
+            <a href="." class="underline font-bold">Reload</a>
+            <span class="dismiss text-xl">🗙</span>
+        </div>
+    </div>
 </div>

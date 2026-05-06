@@ -19,13 +19,17 @@
     <HeadOutlet />
 </head>
 
-<body>
+<body class="bg-amber-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 font-sans antialiased transition-colors duration-300">
     <script>
         // Inline script to prevent FOUC (Flash of Unstyled Content) on initial load
-        const theme = localStorage.getItem('theme');
-        if (theme) {
-            document.documentElement.setAttribute('data-theme', theme);
+        function applyTheme() {
+            const theme = localStorage.getItem('theme');
+            if (theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+            }
         }
+
+        applyTheme();
 
         function toggleTheme() {
             let currentTheme = document.documentElement.getAttribute('data-theme');
@@ -36,6 +40,15 @@
             document.documentElement.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
         }
+
+        // Robust persistence across any DOM patches (like Blazor enhanced navigation)
+        const observer = new MutationObserver(() => {
+            const theme = localStorage.getItem('theme');
+            if (theme && document.documentElement.getAttribute('data-theme') !== theme) {
+                applyTheme();
+            }
+        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     </script>
     <Routes />
     <ReconnectModal />

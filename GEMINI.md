@@ -42,9 +42,13 @@ When adding a new service:
 - **Architecture**: Clean Architecture / DDD
 - **Messaging**: RabbitMQ (Event-Driven)
 - **Database**: PostgreSQL (EF Core)
-- **Frontend**: Blazor
+- **Frontend**: Blazor with Tailwind CSS
 
-## Domain Boundaries
+## Styling Conventions
+- **Tailwind CSS**: Use Tailwind utility classes for all styling. Avoid custom vanilla CSS unless absolutely necessary.
+- **Source CSS**: Edit `Web/ChipBakery.Web/Styles/app.css`. The compiled output is automatically generated to `wwwroot/app.css` during the build process.
+- **Design System**: Follow the "Cute Bakery" aesthetic — soft pastels, warm tones, rounded corners (`rounded-2xl`, `rounded-3xl`), and minimal glassmorphism effects.
+- **Dark Mode**: Support dark mode using the `dark:` prefix in Tailwind classes. The theme is managed via a `[data-theme]` attribute on the `<html>` element.
 * **Inventory.Service**: Manages finished goods (items for sale) that were produced earlier. ✅ Refactored to Clean Architecture.
 * **Warehouse.Service**: Manages raw materials (flour, yeast, etc.) that are supplied by the supplier.
 * **Supplier.Service**: Acts as a mock service that handles incoming ingredient transports into the ecosystem.

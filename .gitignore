@@ -66,3 +66,7 @@ aspirate.json
 ehthumbs.db
 Thumbs.db
 .aider*
+
+# Node dependencies
+node_modules/
+
