@@ -10,6 +10,13 @@ public static class SupplierEndpoints
         var group = app.MapGroup("/api/supplier")
             .WithTags("Supplier");
 
+        group.MapGet("/", async (ISupplierService svc, CancellationToken ct) =>
+        {
+            var transports = await svc.GetAllAsync(ct);
+            return Results.Ok(transports);
+        })
+        .WithName("GetAllTransports");
+
         group.MapPost("/dispatch", async (DispatchTransportRequest request, ISupplierService svc, CancellationToken ct) =>
         {
             await svc.DispatchTransportAsync(request, ct);

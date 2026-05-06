@@ -7,6 +7,7 @@ ChipBakery is a modern, distributed microservices application built with **.NET 
 The project follows a microservices pattern, with **.NET Aspire** acting as the central orchestrator (`AppHost`) to manage service discovery, connection strings, and infrastructure dependencies.
 
 ### Core Services
+All backend services strictly follow the Clean Architecture pattern, divided into Domain, Application, Infrastructure, and API layers.
 - **ChipBakery.Web:** A Blazor-based frontend for users to browse and place orders.
 - **Order.Service:** Manages customer orders and publishes events when orders are placed.
 - **Inventory.Service:** Tracks stock levels for ingredients and finished goods.

@@ -76,8 +76,8 @@ public class HttpInventoryClient : IInventoryClient
 
         // ── Step 2: Deduct the stock ─────────────────────────────────────────────────
         // POST /api/inventory/deduct accepts ChipBakery.Shared.OrderRequest.
-        // CustomerName is not used by the deduct endpoint — it maps only ProductId + Quantity.
-        var deductRequest = new OrderRequest(productId, quantity, string.Empty);
+        // CustomerName and CustomerId are not used by the deduct endpoint — it maps only ProductId + Quantity.
+        var deductRequest = new OrderRequest(productId, quantity, string.Empty, string.Empty);
 
         HttpResponseMessage deductResponse;
         try

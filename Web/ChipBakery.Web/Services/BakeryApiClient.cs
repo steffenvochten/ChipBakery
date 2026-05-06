@@ -114,6 +114,21 @@ public class BakeryApiClient(IHttpClientFactory httpClientFactory)
         return await client.GetFromJsonAsync<List<BakingJob>>("/api/production") ?? new();
     }
 
+    // ─── Supplier ───────────────────────────────────────────────────────────
+
+    public async Task<List<SupplierTransportDto>> GetAllSupplierTransportsAsync()
+    {
+        var client = httpClientFactory.CreateClient("Supplier");
+        return await client.GetFromJsonAsync<List<SupplierTransportDto>>("/api/supplier") ?? new();
+    }
+
+    public async Task<bool> DispatchTransportAsync(DispatchTransportRequest request)
+    {
+        var client = httpClientFactory.CreateClient("Supplier");
+        var response = await client.PostAsJsonAsync("/api/supplier/dispatch", request);
+        return response.IsSuccessStatusCode;
+    }
+
     // ─── Loyalty ────────────────────────────────────────────────────────────
 
     public async Task<CustomerLoyalty?> GetCustomerLoyaltyAsync(Guid customerId)

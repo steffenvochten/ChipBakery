@@ -11,4 +11,5 @@ public interface IWarehouseService
     Task<WarehouseItemDto> UpdateItemAsync(Guid id, UpdateWarehouseItemRequest request, CancellationToken ct = default);
     Task DeleteItemAsync(Guid id, CancellationToken ct = default);
     Task DeductStockAsync(DeductStockRequest request, CancellationToken ct = default);
+    Task<RecipeCheckResponse> CheckRecipeAsync(RecipeCheckRequest request, CancellationToken ct = default);
 }

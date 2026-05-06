@@ -2,7 +2,7 @@ namespace ChipBakery.Shared;
 
 public record ProductItem(Guid Id, string Name, decimal Price, int AvailableQuantity);
 
-public record OrderRequest(Guid ProductId, int Quantity, string CustomerName);
+public record OrderRequest(Guid ProductId, int Quantity, string CustomerName, string CustomerId);
 
 public record OrderResponse(bool Success, string Message, Guid? OrderId = null);
 
@@ -48,6 +48,10 @@ public record UpdateInventoryRequest(string Name, decimal Price, int Quantity);
 
 public record WarehouseItem(Guid Id, string Name, decimal Quantity, string Unit);
 
+public record RecipeCheckRequest(Guid ProductId, int Quantity);
+
+public record RecipeCheckResponse(bool Available, string? Message = null);
+
 public class CreateWarehouseItemRequest
 {
     public string Name { get; set; } = string.Empty;
@@ -65,6 +69,12 @@ public record CustomerLoyalty(Guid CustomerId, int TotalPoints, string Tier, Lis
 
 public record LoyaltyTransaction(Guid Id, int Points, DateTime Date, string Description);
 
+// ─── Supplier DTOs ────────────────────────────────────────────────────────
+
+public record SupplierTransportDto(Guid Id, string IngredientName, decimal Quantity, string Unit, DateTime Timestamp);
+
+public record DispatchTransportRequest(string IngredientName, decimal Quantity, string Unit);
+
 /// <summary>
 /// Published when a new order is successfully placed and persisted.
 /// Will be routed to Production.Service via RabbitMQ when the real event bus is wired up.
@@ -75,9 +85,11 @@ public record LoyaltyTransaction(Guid Id, int Points, DateTime Date, string Desc
 /// <param name="Quantity">Number of units ordered.</param>
 /// <param name="TotalPrice">Total cost captured at order time (unit price × quantity).</param>
 /// <param name="PlacedAt">UTC timestamp when the order was placed.</param>
+/// <param name="CustomerId">Unique identifier of the customer.</param>
 public record OrderPlacedEvent(
     Guid OrderId,
     string CustomerName,
+    string CustomerId,
     Guid ProductId,
     int Quantity,
     decimal TotalPrice,

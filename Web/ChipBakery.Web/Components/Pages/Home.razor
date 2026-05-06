@@ -203,7 +203,7 @@
         
         try
         {
-            var request = new OrderRequest(_selectedProduct.Id, _orderModel.Quantity, _orderModel.CustomerName);
+            var request = new OrderRequest(_selectedProduct.Id, _orderModel.Quantity, _orderModel.CustomerName, Guid.NewGuid().ToString());
             var response = await ApiClient.PlaceOrderAsync(request);
 
             ShowNotification(response.Message, !response.Success);

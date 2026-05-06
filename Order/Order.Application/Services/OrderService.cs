@@ -21,6 +21,7 @@ public class OrderService : IOrderService
 {
     private readonly IOrderRepository _repository;
     private readonly IInventoryClient _inventoryClient;
+    private readonly IWarehouseClient _warehouseClient;
     private readonly IEventPublisher _eventPublisher;
     private readonly IValidator<PlaceOrderRequest> _placeOrderValidator;
     private readonly ILogger<OrderService> _logger;
@@ -28,12 +29,14 @@ public class OrderService : IOrderService
     public OrderService(
         IOrderRepository repository,
         IInventoryClient inventoryClient,
+        IWarehouseClient warehouseClient,
         IEventPublisher eventPublisher,
         IValidator<PlaceOrderRequest> placeOrderValidator,
         ILogger<OrderService> logger)
     {
         _repository = repository;
         _inventoryClient = inventoryClient;
+        _warehouseClient = warehouseClient;
         _eventPublisher = eventPublisher;
         _placeOrderValidator = placeOrderValidator;
         _logger = logger;
@@ -61,7 +64,14 @@ public class OrderService : IOrderService
         // 1. Validate inputs
         await _placeOrderValidator.ValidateAndThrowAsync(request, ct);
 
-        // 2. Synchronously check & deduct stock from Inventory.Service.
+        // 2. Synchronously check ingredients in Warehouse.Service
+        var recipeCheck = await _warehouseClient.CheckRecipeAsync(request.ProductId, request.Quantity, ct);
+        if (!recipeCheck.Available)
+        {
+            throw new InvalidOperationException($"Order could not be placed: {recipeCheck.Message ?? "Insufficient ingredients."}");
+        }
+
+        // 3. Synchronously check & deduct stock from Inventory.Service.
         //    This is the critical invariant: stock MUST be confirmed before the order is accepted.
         var deductResult = await _inventoryClient.DeductStockAsync(request.ProductId, request.Quantity, ct);
 
@@ -98,6 +108,7 @@ public class OrderService : IOrderService
         await _eventPublisher.PublishAsync(new OrderPlacedEvent(
             order.Id,
             order.CustomerName,
+            request.CustomerId,
             order.ProductId,
             order.Quantity,
             order.TotalPrice,

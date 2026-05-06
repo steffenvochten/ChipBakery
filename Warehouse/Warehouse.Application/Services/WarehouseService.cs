@@ -102,4 +102,22 @@ public class WarehouseService(
         logger.LogInformation("Deducted {Quantity}{Unit} from warehouse item {ItemName}", request.Quantity, item.Unit, item.Name);
         await eventPublisher.PublishAsync(new StockDeductedEvent(item.Id, request.Quantity, item.Quantity), ct);
     }
+
+    public async Task<RecipeCheckResponse> CheckRecipeAsync(RecipeCheckRequest request, CancellationToken ct = default)
+    {
+        // In a real system, we'd lookup the recipe for the ProductId and check each ingredient.
+        // For this prototype, we'll simulate a check: every product needs some 'Flour' and 'Sugar'.
+        var items = await repository.GetAllAsync(ct);
+        
+        var flour = items.FirstOrDefault(i => i.Name.Contains("Flour", StringComparison.OrdinalIgnoreCase));
+        var sugar = items.FirstOrDefault(i => i.Name.Contains("Sugar", StringComparison.OrdinalIgnoreCase));
+
+        if (flour == null || flour.Quantity < 1) 
+            return new RecipeCheckResponse(false, "Insufficient Flour in warehouse.");
+            
+        if (sugar == null || sugar.Quantity < 1) 
+            return new RecipeCheckResponse(false, "Insufficient Sugar in warehouse.");
+
+        return new RecipeCheckResponse(true);
+    }
 }

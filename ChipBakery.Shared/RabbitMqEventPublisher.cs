@@ -1,10 +1,9 @@
 using System.Text;
 using System.Text.Json;
-using ChipBakery.Shared;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 
-namespace Order.Infrastructure.Events;
+namespace ChipBakery.Shared;
 
 public class RabbitMqEventPublisher : IEventPublisher
 {

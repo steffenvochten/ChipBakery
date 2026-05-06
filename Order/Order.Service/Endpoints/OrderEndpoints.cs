@@ -40,7 +40,7 @@ public static class OrderEndpoints
             // Map ChipBakery.Shared.OrderRequest → internal PlaceOrderRequest.
             // This is the only place that knows about both types — the Application
             // layer has no dependency on ChipBakery.Shared.
-            var placeRequest = new PlaceOrderRequest(request.ProductId, request.Quantity, request.CustomerName);
+            var placeRequest = new PlaceOrderRequest(request.ProductId, request.Quantity, request.CustomerName, request.CustomerId);
             var order = await svc.PlaceOrderAsync(placeRequest, ct);
 
             // Return ChipBakery.Shared.OrderResponse for backward compatibility

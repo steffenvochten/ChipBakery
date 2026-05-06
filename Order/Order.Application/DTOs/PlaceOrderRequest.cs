@@ -9,4 +9,5 @@ namespace Order.Application.DTOs;
 public record PlaceOrderRequest(
     Guid ProductId,
     int Quantity,
-    string CustomerName);
+    string CustomerName,
+    string CustomerId);

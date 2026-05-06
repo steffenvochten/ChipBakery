@@ -13,22 +13,22 @@ namespace Supplier.Application.Services;
 public class SupplierService(
     ISupplierTransportRepository repository,
     IEventPublisher eventPublisher,
-    IValidator<DispatchTransportRequest> validator,
+    IValidator<Supplier.Application.DTOs.DispatchTransportRequest> validator,
     ILogger<SupplierService> logger) : ISupplierService
 {
-    public async Task<SupplierTransportDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<Supplier.Application.DTOs.SupplierTransportDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         var item = await repository.GetByIdAsync(id, ct);
         return item?.ToDto();
     }
 
-    public async Task<List<SupplierTransportDto>> GetAllAsync(CancellationToken ct = default)
+    public async Task<List<Supplier.Application.DTOs.SupplierTransportDto>> GetAllAsync(CancellationToken ct = default)
     {
         var items = await repository.GetAllAsync(ct);
         return items.ToDtoList();
     }
 
-    public async Task<SupplierTransportDto> DispatchTransportAsync(DispatchTransportRequest request, CancellationToken ct = default)
+    public async Task<Supplier.Application.DTOs.SupplierTransportDto> DispatchTransportAsync(Supplier.Application.DTOs.DispatchTransportRequest request, CancellationToken ct = default)
     {
         await validator.ValidateAndThrowAsync(request, ct);
 

@@ -37,6 +37,12 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<IInventoryClient, HttpInventoryClient>();
 
+        // Named HttpClient for Warehouse.Service.
+        builder.Services.AddHttpClient("Warehouse", client =>
+            client.BaseAddress = new Uri("https://warehouse-service"));
+
+        builder.Services.AddScoped<IWarehouseClient, HttpWarehouseClient>();
+
         return builder;
     }
 }

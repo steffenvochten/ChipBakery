@@ -50,11 +50,11 @@ When adding a new service:
 - **Design System**: Follow the "Cute Bakery" aesthetic — soft pastels, warm tones, rounded corners (`rounded-2xl`, `rounded-3xl`), and minimal glassmorphism effects.
 - **Dark Mode**: Support dark mode using the `dark:` prefix in Tailwind classes. The theme is managed via a `[data-theme]` attribute on the `<html>` element.
 * **Inventory.Service**: Manages finished goods (items for sale) that were produced earlier. ✅ Refactored to Clean Architecture.
-* **Warehouse.Service**: Manages raw materials (flour, yeast, etc.) that are supplied by the supplier.
-* **Supplier.Service**: Acts as a mock service that handles incoming ingredient transports into the ecosystem.
+* **Warehouse.Service**: Manages raw materials (flour, yeast, etc.) that are supplied by the supplier. ✅ Refactored to Clean Architecture.
+* **Supplier.Service**: Acts as a mock service that handles incoming ingredient transports into the ecosystem. ✅ Refactored to Clean Architecture.
 * **Order.Service**: Handles transactions. It must synchronously check if there are enough items/ingredients available before accepting an order. ✅ Refactored to Clean Architecture.
-* **Production.Service**: Background worker consuming `OrderPlaced` events to handle baking schedules and updates tracking in Redis.
-* **Loyalty.Service**: Handles loyalty/rewards logic.
+* **Production.Service**: Background worker consuming `OrderPlaced` events to handle baking schedules and updates tracking in Redis. ✅ Refactored to Clean Architecture.
+* **Loyalty.Service**: Handles loyalty/rewards logic. ✅ Refactored to Clean Architecture.
 
 ## Service Architecture Pattern
 All services should be built using Clean Architecture with 4 separate projects per service:

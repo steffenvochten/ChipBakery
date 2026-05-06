@@ -53,6 +53,13 @@ public static class WarehouseEndpoints
         })
         .WithName("DeductWarehouseStock");
 
+        group.MapPost("/check-recipe", async (RecipeCheckRequest request, IWarehouseService svc, CancellationToken ct) =>
+        {
+            var result = await svc.CheckRecipeAsync(request, ct);
+            return Results.Ok(result);
+        })
+        .WithName("CheckRecipe");
+
         return app;
     }
 }

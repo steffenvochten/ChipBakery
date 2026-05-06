@@ -55,7 +55,8 @@ var orderService = builder.AddProject<Projects.Order_Service>("order-service", l
     .WaitFor(orderDb)
     .WithReference(rabbitmq)
     .WaitFor(rabbitmq)
-    .WithReference(inventoryService); // Needs to discover inventory-service to deduct stock
+    .WithReference(inventoryService) // Needs to discover inventory-service to deduct stock
+    .WithReference(warehouseService); // Needs to discover warehouse-service to check recipe
 
 // ==========================================
 // 3. Background Worker
