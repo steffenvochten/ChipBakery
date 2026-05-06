@@ -12,6 +12,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ChipBakery.ServiceDefaults\ChipBakery.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\ChipBakery.ServiceDefaults\ChipBakery.ServiceDefaults.csproj" />
   </ItemGroup>
 </Project>

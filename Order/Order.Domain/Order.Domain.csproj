@@ -10,6 +10,6 @@
     This is the only external dependency for the Domain layer.
   -->
   <ItemGroup>
-    <ProjectReference Include="..\ChipBakery.Shared\ChipBakery.Shared.csproj" />
+    <ProjectReference Include="..\..\ChipBakery.Shared\ChipBakery.Shared.csproj" />
   </ItemGroup>
 </Project>

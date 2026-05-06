@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="../ChipBakery.ServiceDefaults/ChipBakery.ServiceDefaults.csproj" />
+  <Project Path="Supplier.Service/Supplier.Service.csproj" />
+</Solution>

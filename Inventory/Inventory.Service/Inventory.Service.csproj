@@ -12,8 +12,8 @@
 
   <ItemGroup>
     <!-- Aspire & solution-wide defaults -->
-    <ProjectReference Include="..\ChipBakery.ServiceDefaults\ChipBakery.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\ChipBakery.Shared\ChipBakery.Shared.csproj" />
+    <ProjectReference Include="..\..\ChipBakery.ServiceDefaults\ChipBakery.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\ChipBakery.Shared\ChipBakery.Shared.csproj" />
 
     <!-- Clean Architecture layers (Domain → Application → Infrastructure → API) -->
     <ProjectReference Include="..\Inventory.Domain\Inventory.Domain.csproj" />

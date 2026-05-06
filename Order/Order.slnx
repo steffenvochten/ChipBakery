@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="../ChipBakery.ServiceDefaults/ChipBakery.ServiceDefaults.csproj" />
+  <Project Path="../ChipBakery.Shared/ChipBakery.Shared.csproj" />
+  <Project Path="Order.Domain/Order.Domain.csproj" />
+  <Project Path="Order.Application/Order.Application.csproj" />
+  <Project Path="Order.Infrastructure/Order.Infrastructure.csproj" />
+  <Project Path="Order.Service/Order.Service.csproj" />
+</Solution>

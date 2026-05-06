@@ -1,13 +1,13 @@
 <Project Sdk="Aspire.AppHost.Sdk/13.2.4">
 
   <ItemGroup>
-    <ProjectReference Include="..\ChipBakery.Web\ChipBakery.Web.csproj" />
-    <ProjectReference Include="..\Order.Service\Order.Service.csproj" />
-    <ProjectReference Include="..\Warehouse.Service\Warehouse.Service.csproj" />
-    <ProjectReference Include="..\Supplier.Service\Supplier.Service.csproj" />
-    <ProjectReference Include="..\Inventory.Service\Inventory.Service.csproj" />
-    <ProjectReference Include="..\Loyalty.Service\Loyalty.Service.csproj" />
-    <ProjectReference Include="..\Production.Service\Production.Service.csproj" />
+    <ProjectReference Include="..\Web\ChipBakery.Web\ChipBakery.Web.csproj" />
+    <ProjectReference Include="..\Order\Order.Service\Order.Service.csproj" />
+    <ProjectReference Include="..\Warehouse\Warehouse.Service\Warehouse.Service.csproj" />
+    <ProjectReference Include="..\Supplier\Supplier.Service\Supplier.Service.csproj" />
+    <ProjectReference Include="..\Inventory\Inventory.Service\Inventory.Service.csproj" />
+    <ProjectReference Include="..\Loyalty\Loyalty.Service\Loyalty.Service.csproj" />
+    <ProjectReference Include="..\Production\Production.Service\Production.Service.csproj" />
   </ItemGroup>
 
   <ItemGroup>

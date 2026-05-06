@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="../ChipBakery.ServiceDefaults/ChipBakery.ServiceDefaults.csproj" />
+  <Project Path="../ChipBakery.Shared/ChipBakery.Shared.csproj" />
+  <Project Path="Inventory.Domain/Inventory.Domain.csproj" />
+  <Project Path="Inventory.Application/Inventory.Application.csproj" />
+  <Project Path="Inventory.Infrastructure/Inventory.Infrastructure.csproj" />
+  <Project Path="Inventory.Service/Inventory.Service.csproj" />
+</Solution>

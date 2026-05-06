@@ -12,9 +12,9 @@
 
   <ItemGroup>
     <!-- Aspire service defaults (health checks, telemetry, service discovery) -->
-    <ProjectReference Include="..\ChipBakery.ServiceDefaults\ChipBakery.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\ChipBakery.ServiceDefaults\ChipBakery.ServiceDefaults.csproj" />
     <!-- ChipBakery.Shared — OrderRequest/OrderResponse for Blazor compatibility at API boundary -->
-    <ProjectReference Include="..\ChipBakery.Shared\ChipBakery.Shared.csproj" />
+    <ProjectReference Include="..\..\ChipBakery.Shared\ChipBakery.Shared.csproj" />
     <!-- Clean Architecture layers -->
     <ProjectReference Include="..\Order.Domain\Order.Domain.csproj" />
     <ProjectReference Include="..\Order.Application\Order.Application.csproj" />

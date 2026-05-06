@@ -8,7 +8,7 @@
 
   <!-- IEventPublisher lives in ChipBakery.Shared (shared across all services to avoid duplication). -->
   <ItemGroup>
-    <ProjectReference Include="..\ChipBakery.Shared\ChipBakery.Shared.csproj" />
+    <ProjectReference Include="..\..\ChipBakery.Shared\ChipBakery.Shared.csproj" />
   </ItemGroup>
 
 </Project>

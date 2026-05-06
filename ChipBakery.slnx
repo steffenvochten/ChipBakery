@@ -2,20 +2,20 @@
   <Project Path="ChipBakery.AppHost/ChipBakery.AppHost.csproj" />
   <Project Path="ChipBakery.ServiceDefaults/ChipBakery.ServiceDefaults.csproj" />
   <Project Path="ChipBakery.Shared/ChipBakery.Shared.csproj" />
-  <Project Path="ChipBakery.Web/ChipBakery.Web.csproj" />
+  <Project Path="Web/ChipBakery.Web/ChipBakery.Web.csproj" />
   <!-- Inventory Service — Clean Architecture layers -->
-  <Project Path="Inventory.Domain/Inventory.Domain.csproj" />
-  <Project Path="Inventory.Application/Inventory.Application.csproj" />
-  <Project Path="Inventory.Infrastructure/Inventory.Infrastructure.csproj" />
-  <Project Path="Inventory.Service/Inventory.Service.csproj" />
+  <Project Path="Inventory/Inventory.Domain/Inventory.Domain.csproj" />
+  <Project Path="Inventory/Inventory.Application/Inventory.Application.csproj" />
+  <Project Path="Inventory/Inventory.Infrastructure/Inventory.Infrastructure.csproj" />
+  <Project Path="Inventory/Inventory.Service/Inventory.Service.csproj" />
   <!-- Other services -->
-  <Project Path="Loyalty.Service/Loyalty.Service.csproj" />
+  <Project Path="Loyalty/Loyalty.Service/Loyalty.Service.csproj" />
   <!-- Order Service — Clean Architecture layers -->
-  <Project Path="Order.Domain/Order.Domain.csproj" />
-  <Project Path="Order.Application/Order.Application.csproj" />
-  <Project Path="Order.Infrastructure/Order.Infrastructure.csproj" />
-  <Project Path="Order.Service/Order.Service.csproj" />
-  <Project Path="Production.Service/Production.Service.csproj" />
-  <Project Path="Supplier.Service/Supplier.Service.csproj" />
-  <Project Path="Warehouse.Service/Warehouse.Service.csproj" />
+  <Project Path="Order/Order.Domain/Order.Domain.csproj" />
+  <Project Path="Order/Order.Application/Order.Application.csproj" />
+  <Project Path="Order/Order.Infrastructure/Order.Infrastructure.csproj" />
+  <Project Path="Order/Order.Service/Order.Service.csproj" />
+  <Project Path="Production/Production.Service/Production.Service.csproj" />
+  <Project Path="Supplier/Supplier.Service/Supplier.Service.csproj" />
+  <Project Path="Warehouse/Warehouse.Service/Warehouse.Service.csproj" />
 </Solution>
