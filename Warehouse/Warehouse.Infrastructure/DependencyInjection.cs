@@ -14,7 +14,11 @@ public static class DependencyInjection
     {
         builder.AddNpgsqlDbContext<WarehouseDbContext>("warehousedb");
         builder.Services.AddScoped<IWarehouseRepository, WarehouseItemRepository>();
-        builder.Services.AddScoped<IEventPublisher, MockEventPublisher>();
+        
+        // RabbitMQ Event Publisher integration
+        builder.AddRabbitMQClient("rabbitmq");
+        builder.Services.AddScoped<IEventPublisher, RabbitMqEventPublisher>();
+        
         return builder;
     }
 }

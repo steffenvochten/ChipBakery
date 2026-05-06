@@ -43,3 +43,42 @@ public record InventoryItem(Guid Id, string Name, decimal Price, int Quantity);
 public record CreateInventoryRequest(string Name, decimal Price, int Quantity);
 
 public record UpdateInventoryRequest(string Name, decimal Price, int Quantity);
+
+// ─── Warehouse DTOs ───────────────────────────────────────────────────────
+
+public record WarehouseItem(Guid Id, string Name, decimal Quantity, string Unit);
+
+public class CreateWarehouseItemRequest
+{
+    public string Name { get; set; } = string.Empty;
+    public decimal Quantity { get; set; }
+    public string Unit { get; set; } = string.Empty;
+}
+
+// ─── Production DTOs ──────────────────────────────────────────────────────
+
+public record BakingJob(Guid Id, Guid ProductId, decimal Quantity, string Status, DateTime? StartTime, DateTime? EndTime);
+
+// ─── Loyalty DTOs ─────────────────────────────────────────────────────────
+
+public record CustomerLoyalty(Guid CustomerId, int TotalPoints, string Tier, List<LoyaltyTransaction> Transactions);
+
+public record LoyaltyTransaction(Guid Id, int Points, DateTime Date, string Description);
+
+/// <summary>
+/// Published when a new order is successfully placed and persisted.
+/// Will be routed to Production.Service via RabbitMQ when the real event bus is wired up.
+/// </summary>
+/// <param name="OrderId">Unique identifier of the placed order.</param>
+/// <param name="CustomerName">Name of the customer who placed the order.</param>
+/// <param name="ProductId">ID of the ordered product (references Inventory.Service).</param>
+/// <param name="Quantity">Number of units ordered.</param>
+/// <param name="TotalPrice">Total cost captured at order time (unit price × quantity).</param>
+/// <param name="PlacedAt">UTC timestamp when the order was placed.</param>
+public record OrderPlacedEvent(
+    Guid OrderId,
+    string CustomerName,
+    Guid ProductId,
+    int Quantity,
+    decimal TotalPrice,
+    DateTime PlacedAt);

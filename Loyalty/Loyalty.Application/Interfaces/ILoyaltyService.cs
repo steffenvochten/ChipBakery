@@ -4,9 +4,6 @@ namespace Loyalty.Application.Interfaces;
 
 public interface ILoyaltyService
 {
-    Task<List<LoyaltyMemberDto>> GetAllAsync(CancellationToken ct = default);
-    Task<LoyaltyMemberDto> GetByIdAsync(Guid id, CancellationToken ct = default);
-    Task<LoyaltyMemberDto> CreateAsync(CreateLoyaltyMemberRequest request, CancellationToken ct = default);
-    Task<LoyaltyMemberDto> AddPointsAsync(AddPointsRequest request, CancellationToken ct = default);
-    Task<LoyaltyMemberDto> DeductPointsAsync(DeductPointsRequest request, CancellationToken ct = default);
+    Task<CustomerLoyaltyDto?> GetByCustomerIdAsync(Guid customerId, CancellationToken ct = default);
+    Task AwardPointsAsync(Guid customerId, int points, string description, CancellationToken ct = default);
 }

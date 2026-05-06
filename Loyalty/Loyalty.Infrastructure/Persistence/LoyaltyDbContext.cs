@@ -6,11 +6,12 @@ namespace Loyalty.Infrastructure.Persistence;
 
 public class LoyaltyDbContext(DbContextOptions<LoyaltyDbContext> options) : DbContext(options)
 {
-    public DbSet<LoyaltyMember> Members => Set<LoyaltyMember>();
+    public DbSet<CustomerLoyalty> CustomerLoyalties => Set<CustomerLoyalty>();
+    public DbSet<LoyaltyTransaction> LoyaltyTransactions => Set<LoyaltyTransaction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.ApplyConfiguration(new LoyaltyMemberConfiguration());
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(LoyaltyDbContext).Assembly);
     }
 }

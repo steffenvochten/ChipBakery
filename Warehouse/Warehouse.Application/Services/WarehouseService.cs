@@ -36,7 +36,7 @@ public class WarehouseService(
     {
         await createValidator.ValidateAndThrowAsync(request, ct);
 
-        var item = new WarehouseItem
+        var item = new Warehouse.Domain.Entities.WarehouseItem
         {
             Id = Guid.NewGuid(),
             Name = request.Name,

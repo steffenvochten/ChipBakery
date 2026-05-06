@@ -1,6 +1,5 @@
 namespace Loyalty.Application.DTOs;
 
-public record LoyaltyMemberDto(Guid Id, string CustomerName, int Points, string Email);
-public record CreateLoyaltyMemberRequest(string CustomerName, string Email);
-public record AddPointsRequest(Guid Id, int Points);
-public record DeductPointsRequest(Guid Id, int Points);
+public record CustomerLoyaltyDto(Guid CustomerId, int TotalPoints, string Tier, List<LoyaltyTransactionDto> Transactions);
+public record LoyaltyTransactionDto(Guid Id, int Points, DateTime Date, string Description);
+public record AwardPointsRequest(Guid CustomerId, int Points, string Description);

@@ -6,11 +6,11 @@ namespace Production.Infrastructure.Persistence;
 
 public class ProductionDbContext(DbContextOptions<ProductionDbContext> options) : DbContext(options)
 {
-    public DbSet<BakingSchedule> BakingSchedules => Set<BakingSchedule>();
+    public DbSet<BakingJob> BakingJobs => Set<BakingJob>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.ApplyConfiguration(new BakingScheduleConfiguration());
+        modelBuilder.ApplyConfiguration(new BakingJobConfiguration());
     }
 }

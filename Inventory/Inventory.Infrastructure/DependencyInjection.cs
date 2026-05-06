@@ -23,9 +23,9 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
 
-        // TODO: Swap MockEventPublisher for RabbitMqEventPublisher when ready.
-        // See Inventory.Infrastructure/Events/MockEventPublisher.cs for the replacement guide.
-        builder.Services.AddScoped<IEventPublisher, MockEventPublisher>();
+        // RabbitMQ Event Publisher integration
+        builder.AddRabbitMQClient("rabbitmq");
+        builder.Services.AddScoped<IEventPublisher, RabbitMqEventPublisher>();
 
         return builder;
     }

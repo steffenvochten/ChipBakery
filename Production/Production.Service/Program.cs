@@ -3,6 +3,7 @@ using Production.Infrastructure;
 using Production.Service.Endpoints;
 using Production.Service.Extensions;
 using Production.Service.Middleware;
+using Production.Service.Messaging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,9 @@ builder.AddServiceDefaults();
 // Add Clean Architecture layers.
 builder.AddInfrastructure();
 builder.Services.AddApplication();
+
+// Register Messaging Consumers
+builder.Services.AddHostedService<OrderPlacedConsumer>();
 
 // Add cross-cutting concerns.
 builder.Services.AddProblemDetails();

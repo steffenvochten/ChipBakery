@@ -14,7 +14,11 @@ public static class DependencyInjection
     {
         builder.AddNpgsqlDbContext<LoyaltyDbContext>("loyaltydb");
         builder.Services.AddScoped<ILoyaltyRepository, LoyaltyRepository>();
-        builder.Services.AddScoped<IEventPublisher, MockEventPublisher>();
+        
+        // RabbitMQ Event Publisher integration
+        builder.AddRabbitMQClient("rabbitmq");
+        builder.Services.AddScoped<IEventPublisher, RabbitMqEventPublisher>();
+        
         return builder;
     }
 }

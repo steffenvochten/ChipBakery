@@ -1,3 +1,4 @@
+using ChipBakery.Shared;
 using Warehouse.Application.DTOs;
 
 namespace Warehouse.Application.Interfaces;

@@ -4,9 +4,7 @@ namespace Supplier.Application.Interfaces;
 
 public interface ISupplierService
 {
-    Task<IngredientSupplyDto?> GetByIdAsync(Guid id, CancellationToken ct = default);
-    Task<List<IngredientSupplyDto>> GetAllAsync(CancellationToken ct = default);
-    Task<IngredientSupplyDto> CreateAsync(CreateIngredientSupplyRequest request, CancellationToken ct = default);
-    Task<IngredientSupplyDto> UpdateAsync(Guid id, UpdateIngredientSupplyRequest request, CancellationToken ct = default);
-    Task DeleteAsync(Guid id, CancellationToken ct = default);
+    Task<SupplierTransportDto?> GetByIdAsync(Guid id, CancellationToken ct = default);
+    Task<List<SupplierTransportDto>> GetAllAsync(CancellationToken ct = default);
+    Task<SupplierTransportDto> DispatchTransportAsync(DispatchTransportRequest request, CancellationToken ct = default);
 }

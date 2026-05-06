@@ -13,8 +13,12 @@ public static class DependencyInjection
     public static IHostApplicationBuilder AddInfrastructure(this IHostApplicationBuilder builder)
     {
         builder.AddNpgsqlDbContext<SupplierDbContext>("supplierdb");
-        builder.Services.AddScoped<IIngredientSupplyRepository, IngredientSupplyRepository>();
-        builder.Services.AddScoped<IEventPublisher, MockEventPublisher>();
+        builder.Services.AddScoped<ISupplierTransportRepository, SupplierTransportRepository>();
+        
+        // RabbitMQ Event Publisher integration
+        builder.AddRabbitMQClient("rabbitmq");
+        builder.Services.AddScoped<IEventPublisher, RabbitMqEventPublisher>();
+        
         return builder;
     }
 }

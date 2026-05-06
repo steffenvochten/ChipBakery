@@ -10,40 +10,33 @@ public static class ProductionEndpoints
         var group = app.MapGroup("/api/production")
             .WithTags("Production");
 
-        group.MapGet("/", async (IBakingScheduleService svc, CancellationToken ct) =>
+        group.MapGet("/", async (IBakingService svc, CancellationToken ct) =>
         {
-            var schedules = await svc.GetAllAsync(ct);
-            return Results.Ok(schedules);
+            var jobs = await svc.GetAllJobsAsync(ct);
+            return Results.Ok(jobs);
         })
-        .WithName("GetAllBakingSchedules");
+        .WithName("GetAllBakingJobs");
 
-        group.MapGet("/{id:guid}", async (Guid id, IBakingScheduleService svc, CancellationToken ct) =>
+        group.MapPost("/schedule", async (ScheduleBakingJobRequest request, IBakingService svc, CancellationToken ct) =>
         {
-            var schedule = await svc.GetByIdAsync(id, ct);
-            return Results.Ok(schedule);
+            var job = await svc.ScheduleJobAsync(request, ct);
+            return Results.Ok(job);
         })
-        .WithName("GetBakingScheduleById");
+        .WithName("ScheduleBakingJob");
 
-        group.MapPost("/", async (CreateBakingScheduleRequest request, IBakingScheduleService svc, CancellationToken ct) =>
+        group.MapPost("/{id:guid}/start", async (Guid id, IBakingService svc, CancellationToken ct) =>
         {
-            var schedule = await svc.CreateAsync(request, ct);
-            return Results.CreatedAtRoute("GetBakingScheduleById", new { id = schedule.Id }, schedule);
-        })
-        .WithName("CreateBakingSchedule");
-
-        group.MapPost("/{id:guid}/start", async (Guid id, IBakingScheduleService svc, CancellationToken ct) =>
-        {
-            await svc.StartBakingAsync(id, ct);
+            await svc.StartJobAsync(id, ct);
             return Results.NoContent();
         })
-        .WithName("StartBaking");
+        .WithName("StartBakingJob");
 
-        group.MapPost("/{id:guid}/complete", async (Guid id, IBakingScheduleService svc, CancellationToken ct) =>
+        group.MapPost("/{id:guid}/complete", async (Guid id, IBakingService svc, CancellationToken ct) =>
         {
-            await svc.CompleteBakingAsync(id, ct);
+            await svc.CompleteJobAsync(id, ct);
             return Results.NoContent();
         })
-        .WithName("CompleteBaking");
+        .WithName("CompleteBakingJob");
 
         return app;
     }

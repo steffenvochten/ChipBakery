@@ -9,6 +9,7 @@
   <ItemGroup>
     <!-- Aspire Postgres integration — owns the DbContext and connection lifecycle -->
     <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.2.4" />
+    <PackageReference Include="Aspire.RabbitMQ.Client" Version="13.2.4" />
   </ItemGroup>
 
   <ItemGroup>

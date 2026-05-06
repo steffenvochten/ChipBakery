@@ -9,8 +9,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        services.AddScoped<IBakingScheduleService, BakingScheduleService>();
-        services.AddValidatorsFromAssemblyContaining<BakingScheduleService>();
+        services.AddScoped<IBakingService, BakingService>();
+        services.AddValidatorsFromAssemblyContaining<BakingService>();
         return services;
     }
 }

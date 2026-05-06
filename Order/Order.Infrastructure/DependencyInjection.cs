@@ -25,9 +25,9 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
-        // TODO: Swap MockEventPublisher for RabbitMqEventPublisher when ready.
-        // See Order.Infrastructure/Events/MockEventPublisher.cs for the replacement guide.
-        builder.Services.AddScoped<IEventPublisher, MockEventPublisher>();
+        // RabbitMQ Event Publisher integration
+        builder.AddRabbitMQClient("rabbitmq");
+        builder.Services.AddScoped<IEventPublisher, RabbitMqEventPublisher>();
 
         // Named HttpClient for Inventory.Service.
         // "https://inventory-service" is resolved by Aspire service discovery at runtime.

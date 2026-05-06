@@ -90,4 +90,40 @@ public class BakeryApiClient(IHttpClientFactory httpClientFactory)
         var response = await client.DeleteAsync($"/api/inventory/{id}");
         return response.IsSuccessStatusCode;
     }
+
+    // ─── Warehouse ──────────────────────────────────────────────────────────
+
+    public async Task<List<WarehouseItem>> GetAllWarehouseItemsAsync()
+    {
+        var client = httpClientFactory.CreateClient("Warehouse");
+        return await client.GetFromJsonAsync<List<WarehouseItem>>("/api/warehouse") ?? new();
+    }
+
+    public async Task<bool> CreateWarehouseItemAsync(CreateWarehouseItemRequest request)
+    {
+        var client = httpClientFactory.CreateClient("Warehouse");
+        var response = await client.PostAsJsonAsync("/api/warehouse", request);
+        return response.IsSuccessStatusCode;
+    }
+
+    // ─── Production ─────────────────────────────────────────────────────────
+
+    public async Task<List<BakingJob>> GetAllBakingJobsAsync()
+    {
+        var client = httpClientFactory.CreateClient("Production");
+        return await client.GetFromJsonAsync<List<BakingJob>>("/api/production") ?? new();
+    }
+
+    // ─── Loyalty ────────────────────────────────────────────────────────────
+
+    public async Task<CustomerLoyalty?> GetCustomerLoyaltyAsync(Guid customerId)
+    {
+        var client = httpClientFactory.CreateClient("Loyalty");
+        var response = await client.GetAsync($"/api/loyalty/{customerId}");
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadFromJsonAsync<CustomerLoyalty>();
+        }
+        return null;
+    }
 }

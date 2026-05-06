@@ -15,7 +15,8 @@ public class WarehouseItemConfiguration : IEntityTypeConfiguration<WarehouseItem
             .HasMaxLength(200);
 
         builder.Property(i => i.Quantity)
-            .IsRequired();
+            .IsRequired()
+            .HasPrecision(18, 4);
 
         builder.Property(i => i.Unit)
             .IsRequired()

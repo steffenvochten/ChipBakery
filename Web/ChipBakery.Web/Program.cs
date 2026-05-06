@@ -11,6 +11,9 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddHttpClient("Inventory", client => client.BaseAddress = new Uri("https://inventory-service"));
 builder.Services.AddHttpClient("Order", client => client.BaseAddress = new Uri("https://order-service"));
+builder.Services.AddHttpClient("Warehouse", client => client.BaseAddress = new Uri("https://warehouse-service"));
+builder.Services.AddHttpClient("Loyalty", client => client.BaseAddress = new Uri("https://loyalty-service"));
+builder.Services.AddHttpClient("Production", client => client.BaseAddress = new Uri("https://production-service"));
 builder.Services.AddScoped<BakeryApiClient>();
 
 var app = builder.Build();

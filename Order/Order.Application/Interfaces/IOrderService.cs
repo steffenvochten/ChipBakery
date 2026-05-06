@@ -19,7 +19,7 @@ public interface IOrderService
 
     /// <summary>
     /// Places a new order by synchronously validating and deducting stock from Inventory.Service,
-    /// then persisting the order and publishing an <see cref="Order.Domain.Events.OrderPlacedEvent"/>.
+    /// then persisting the order and publishing an <see cref="ChipBakery.Shared.OrderPlacedEvent"/>.
     /// </summary>
     Task<OrderDto> PlaceOrderAsync(PlaceOrderRequest request, CancellationToken ct = default);
 

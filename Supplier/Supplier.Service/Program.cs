@@ -31,6 +31,6 @@ if (app.Environment.IsDevelopment())
 app.UseExceptionHandler();
 app.InitializeDatabase();
 
-app.MapIngredientSupplyEndpoints();
+app.MapSupplierEndpoints();
 
 app.Run();

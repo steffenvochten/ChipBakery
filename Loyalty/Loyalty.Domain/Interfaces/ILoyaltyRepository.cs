@@ -4,11 +4,9 @@ namespace Loyalty.Domain.Interfaces;
 
 public interface ILoyaltyRepository
 {
-    Task<LoyaltyMember?> GetByIdAsync(Guid id, CancellationToken ct = default);
-    Task<LoyaltyMember?> GetByCustomerNameAsync(string customerName, CancellationToken ct = default);
-    Task<List<LoyaltyMember>> GetAllAsync(CancellationToken ct = default);
-    Task AddAsync(LoyaltyMember item, CancellationToken ct = default);
-    void Update(LoyaltyMember item);
-    void Delete(LoyaltyMember item);
+    Task<CustomerLoyalty?> GetByCustomerIdAsync(Guid customerId, CancellationToken ct = default);
+    Task AddOrUpdateAsync(CustomerLoyalty loyalty, CancellationToken ct = default);
+    Task AddTransactionAsync(LoyaltyTransaction transaction, CancellationToken ct = default);
+    Task<List<LoyaltyTransaction>> GetTransactionsByCustomerIdAsync(Guid customerId, CancellationToken ct = default);
     Task<int> SaveChangesAsync(CancellationToken ct = default);
 }
