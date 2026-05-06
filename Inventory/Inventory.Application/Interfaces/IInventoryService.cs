@@ -41,9 +41,10 @@ public interface IInventoryService
 
     /// <summary>
     /// Deducts stock from an inventory item after validating sufficient quantity.
-    /// Throws <see cref="Inventory.Domain.Exceptions.ItemNotFoundException"/> if item not found.
-    /// Throws <see cref="Inventory.Domain.Exceptions.InsufficientStockException"/> if not enough stock.
-    /// Publishes <see cref="Inventory.Domain.Events.StockDeductedEvent"/> (and optionally <see cref="Inventory.Domain.Events.StockDepletedEvent"/>).
+    /// Returns a structured result containing success flag, unit price, and an optional failure message.
+    /// Does NOT throw for not-found or insufficient-stock conditions — those are returned as Success=false
+    /// so the caller (Order.Service) can react without exception handling.
+    /// Publishes <see cref="Inventory.Domain.Events.StockDeductedEvent"/> (and optionally <see cref="Inventory.Domain.Events.StockDepletedEvent"/>) on success.
     /// </summary>
-    Task DeductStockAsync(DeductStockRequest request, CancellationToken ct = default);
+    Task<InventoryDeductResult> DeductStockAsync(DeductStockRequest request, CancellationToken ct = default);
 }

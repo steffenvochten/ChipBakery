@@ -4,7 +4,6 @@ using Order.Application.DTOs;
 using Order.Application.Interfaces;
 using Order.Application.Mapping;
 using Order.Domain.Entities;
-using Order.Domain.Events;
 using Order.Domain.Exceptions;
 using Order.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -118,7 +117,7 @@ public class OrderService : IOrderService
     }
 
     /// <inheritdoc/>
-    public async Task CancelOrderAsync(Guid id, CancellationToken ct = default)
+    public async Task<OrderDto> CancelOrderAsync(Guid id, CancellationToken ct = default)
     {
         var order = await _repository.GetByIdAsync(id, ct)
             ?? throw new OrderNotFoundException(id);
@@ -140,5 +139,7 @@ public class OrderService : IOrderService
         await _eventPublisher.PublishAsync(new OrderCancelledEvent(
             order.Id,
             DateTime.UtcNow), ct);
+
+        return order.ToDto();
     }
 }

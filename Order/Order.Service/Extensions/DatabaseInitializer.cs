@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Order.Infrastructure.Persistence;
 
 namespace Order.Service.Extensions;
@@ -17,9 +18,7 @@ public static class DatabaseInitializer
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
 
-        // EnsureCreated is fine for development/demo.
-        // TODO: Replace with db.Database.MigrateAsync() when EF migrations are added.
-        db.Database.EnsureCreated();
+        db.Database.Migrate();
 
         return app;
     }

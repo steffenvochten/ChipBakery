@@ -75,6 +75,30 @@ public record SupplierTransportDto(Guid Id, string IngredientName, decimal Quant
 
 public record DispatchTransportRequest(string IngredientName, decimal Quantity, string Unit);
 
+public record RestockRequest(string IngredientName, decimal Quantity, string Unit);
+
+public record IngredientSupplyDto(
+    Guid Id,
+    string IngredientName,
+    string SupplierName,
+    int Quantity,
+    decimal Price,
+    DateTime ScheduledDate);
+
+public record CreateIngredientSupplyRequest(
+    string IngredientName,
+    string SupplierName,
+    int Quantity,
+    decimal Price,
+    DateTime ScheduledDate);
+
+public record UpdateIngredientSupplyRequest(
+    string IngredientName,
+    string SupplierName,
+    int Quantity,
+    decimal Price,
+    DateTime ScheduledDate);
+
 /// <summary>
 /// Published when a new order is successfully placed and persisted.
 /// Will be routed to Production.Service via RabbitMQ when the real event bus is wired up.
@@ -94,3 +118,31 @@ public record OrderPlacedEvent(
     int Quantity,
     decimal TotalPrice,
     DateTime PlacedAt);
+
+/// <summary>
+/// Published when a customer cancels an existing order.
+/// </summary>
+public record OrderCancelledEvent(
+    Guid OrderId,
+    DateTime CancelledAt);
+
+/// <summary>
+/// Published by Production.Service when a baking job has finished.
+/// Consumed by Loyalty.Service to award bonus points.
+/// </summary>
+public record JobCompletedEvent(
+    Guid JobId,
+    Guid ProductId,
+    decimal Quantity,
+    DateTime CompletedAt);
+
+/// <summary>
+/// Published by Supplier.Service when a transport is dispatched toward the warehouse.
+/// Consumed by Warehouse.Service to increment raw-material stock on arrival.
+/// </summary>
+public record SupplierTransportDispatchedEvent(
+    Guid Id,
+    string IngredientName,
+    decimal Quantity,
+    string Unit,
+    DateTime Timestamp);

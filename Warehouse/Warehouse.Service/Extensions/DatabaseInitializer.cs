@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Warehouse.Infrastructure.Persistence;
 
 namespace Warehouse.Service.Extensions;
@@ -8,7 +9,8 @@ public static class DatabaseInitializer
     {
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<WarehouseDbContext>();
-        db.Database.EnsureCreated();
+        db.Database.Migrate();
+        WarehouseSeedData.SeedAsync(db).GetAwaiter().GetResult();
         return app;
     }
 }

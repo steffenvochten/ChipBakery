@@ -131,15 +131,27 @@ public class InventoryService : IInventoryService
     }
 
     /// <inheritdoc/>
-    public async Task DeductStockAsync(DeductStockRequest request, CancellationToken ct = default)
+    public async Task<InventoryDeductResult> DeductStockAsync(DeductStockRequest request, CancellationToken ct = default)
     {
         await _deductValidator.ValidateAndThrowAsync(request, ct);
 
-        var item = await _repository.GetByIdAsync(request.ProductId, ct)
-            ?? throw new ItemNotFoundException(request.ProductId);
+        var item = await _repository.GetByIdAsync(request.ProductId, ct);
+        if (item is null)
+        {
+            _logger.LogWarning("Deduct failed: item {ItemId} not found", request.ProductId);
+            return new InventoryDeductResult(false, 0m, $"Inventory item {request.ProductId} not found.");
+        }
 
         if (item.Quantity < request.Quantity)
-            throw new InsufficientStockException(item.Id, request.Quantity, item.Quantity);
+        {
+            _logger.LogWarning(
+                "Deduct failed: insufficient stock for {ItemId}. Requested {Requested}, available {Available}",
+                item.Id, request.Quantity, item.Quantity);
+            return new InventoryDeductResult(
+                false,
+                item.Price,
+                $"Insufficient stock for item {item.Id}. Requested {request.Quantity}, available {item.Quantity}.");
+        }
 
         item.Quantity -= request.Quantity;
 
@@ -167,5 +179,7 @@ public class InventoryService : IInventoryService
                 item.Name,
                 DateTime.UtcNow), ct);
         }
+
+        return new InventoryDeductResult(true, item.Price);
     }
 }

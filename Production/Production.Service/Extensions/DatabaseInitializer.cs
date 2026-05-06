@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Production.Infrastructure.Persistence;
 
+
 namespace Production.Service.Extensions;
 
 public static class DatabaseInitializer
@@ -11,6 +12,6 @@ public static class DatabaseInitializer
         var context = scope.ServiceProvider.GetRequiredService<ProductionDbContext>();
         
         // Ensure database is created and migrations are applied
-        context.Database.EnsureCreated();
+        context.Database.Migrate();
     }
 }

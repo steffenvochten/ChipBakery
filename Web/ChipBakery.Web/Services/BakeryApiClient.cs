@@ -129,6 +129,57 @@ public class BakeryApiClient(IHttpClientFactory httpClientFactory)
         return response.IsSuccessStatusCode;
     }
 
+    public async Task<List<IngredientSupplyDto>> GetAllIngredientSuppliesAsync()
+    {
+        var client = httpClientFactory.CreateClient("Supplier");
+        return await client.GetFromJsonAsync<List<IngredientSupplyDto>>("/api/supplier/ingredients") ?? new();
+    }
+
+    public async Task<IngredientSupplyDto?> GetIngredientSupplyByIdAsync(Guid id)
+    {
+        var client = httpClientFactory.CreateClient("Supplier");
+        var response = await client.GetAsync($"/api/supplier/ingredients/{id}");
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadFromJsonAsync<IngredientSupplyDto>();
+        }
+        return null;
+    }
+
+    public async Task<IngredientSupplyDto> CreateIngredientSupplyAsync(CreateIngredientSupplyRequest req)
+    {
+        var client = httpClientFactory.CreateClient("Supplier");
+        var response = await client.PostAsJsonAsync("/api/supplier/ingredients", req);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<IngredientSupplyDto>())
+            ?? throw new InvalidOperationException("Empty response from server.");
+    }
+
+    public async Task<IngredientSupplyDto> UpdateIngredientSupplyAsync(Guid id, UpdateIngredientSupplyRequest req)
+    {
+        var client = httpClientFactory.CreateClient("Supplier");
+        var response = await client.PutAsJsonAsync($"/api/supplier/ingredients/{id}", req);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<IngredientSupplyDto>())
+            ?? throw new InvalidOperationException("Empty response from server.");
+    }
+
+    public async Task DeleteIngredientSupplyAsync(Guid id)
+    {
+        var client = httpClientFactory.CreateClient("Supplier");
+        var response = await client.DeleteAsync($"/api/supplier/ingredients/{id}");
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task<SupplierTransportDto> DispatchRestockAsync(RestockRequest req)
+    {
+        var client = httpClientFactory.CreateClient("Supplier");
+        var response = await client.PostAsJsonAsync("/api/supplier/restock", req);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<SupplierTransportDto>())
+            ?? throw new InvalidOperationException("Empty response from server.");
+    }
+
     // ─── Loyalty ────────────────────────────────────────────────────────────
 
     public async Task<CustomerLoyalty?> GetCustomerLoyaltyAsync(Guid customerId)

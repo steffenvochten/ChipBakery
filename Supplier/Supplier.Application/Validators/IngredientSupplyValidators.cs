@@ -1,5 +1,5 @@
 using FluentValidation;
-using Supplier.Application.DTOs;
+using ChipBakery.Shared;
 
 namespace Supplier.Application.Validators;
 

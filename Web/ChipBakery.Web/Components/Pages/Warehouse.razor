@@ -1,4 +1,5 @@
 @page "/warehouse"
+@rendermode InteractiveServer
 @using ChipBakery.Shared
 @using ChipBakery.Web.Services
 @inject BakeryApiClient ApiClient
@@ -22,6 +23,14 @@
             Add Ingredient
         </button>
     </div>
+
+    @if (!string.IsNullOrEmpty(pageMessage))
+    {
+        <div class="rounded-3xl @(pageIsError ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300/50" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300/50") border p-4 font-bold flex items-center justify-between gap-4">
+            <span>@pageMessage</span>
+            <button class="btn btn-outline py-2 text-xs" @onclick="() => pageMessage = null">Dismiss</button>
+        </div>
+    }
 
     @if (isLoading)
     {
@@ -51,7 +60,7 @@
                         </div>
                     </div>
                     <div class="mt-6 pt-4 border-t border-bakery-crust/5 flex gap-2">
-                        <button class="btn btn-outline py-2 flex-1 text-xs">Restock</button>
+                        <button class="btn btn-outline py-2 flex-1 text-xs" @onclick="() => RestockItem(item)">Restock</button>
                     </div>
                 </div>
             }
@@ -64,7 +73,12 @@
     <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 backdrop-blur-md bg-stone-950/40 animate-in fade-in duration-300">
         <div class="glass-card w-full max-w-md p-8 shadow-2xl bg-white/90 dark:bg-stone-900/90">
             <h2 class="text-2xl font-black text-bakery-crust dark:text-amber-400 mb-6">Add New Ingredient</h2>
-            
+
+            @if (!string.IsNullOrEmpty(addError))
+            {
+                <div class="mb-4 px-4 py-3 rounded-2xl bg-red-100 text-red-700 text-sm font-bold">@addError</div>
+            }
+
             <div class="space-y-4">
                 <div>
                     <label class="form-label">Ingredient Name</label>
@@ -83,8 +97,37 @@
             </div>
 
             <div class="flex gap-3 mt-8">
-                <button @onclick="CloseAddModal" class="btn btn-outline flex-1">Cancel</button>
-                <button @onclick="SaveItem" class="btn btn-primary flex-1">Save Ingredient</button>
+                <button @onclick="CloseAddModal" class="btn btn-outline flex-1" disabled="@isSaving">Cancel</button>
+                <button @onclick="SaveItem" class="btn btn-primary flex-1" disabled="@isSaving">
+                    @(isSaving ? "Saving..." : "Save Ingredient")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (restockTarget != null)
+{
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 backdrop-blur-md bg-stone-950/40 animate-in fade-in duration-300">
+        <div class="glass-card w-full max-w-md p-8 shadow-2xl bg-white/90 dark:bg-stone-900/90">
+            <span class="text-xs font-black uppercase tracking-widest text-bakery-crust dark:text-amber-500 block">Restock</span>
+            <h2 class="text-2xl font-black text-bakery-crust dark:text-amber-400 mb-6">@restockTarget.Name</h2>
+
+            @if (!string.IsNullOrEmpty(restockError))
+            {
+                <div class="mb-4 px-4 py-3 rounded-2xl bg-red-100 text-red-700 text-sm font-bold">@restockError</div>
+            }
+
+            <div>
+                <label class="form-label">Quantity (@restockTarget.Unit)</label>
+                <input @bind="restockQuantity" type="number" step="0.01" min="0" class="form-control" />
+            </div>
+
+            <div class="flex gap-3 mt-8">
+                <button @onclick="CancelRestock" class="btn btn-outline flex-1" disabled="@isRestocking">Cancel</button>
+                <button @onclick="ConfirmRestock" class="btn btn-primary flex-1" disabled="@isRestocking">
+                    @(isRestocking ? "Dispatching..." : "Confirm Restock")
+                </button>
             </div>
         </div>
     </div>
@@ -95,6 +138,15 @@
     private bool isLoading = true;
     private bool showAddModal = false;
     private CreateWarehouseItemRequest newItem = new();
+    private bool isSaving = false;
+    private string? addError;
+    private string? pageMessage;
+    private bool pageIsError;
+
+    private WarehouseItem? restockTarget;
+    private decimal restockQuantity = 50m;
+    private bool isRestocking = false;
+    private string? restockError;
 
     protected override async Task OnInitializedAsync()
     {
@@ -104,20 +156,109 @@
     private async Task LoadData()
     {
         isLoading = true;
-        warehouseItems = await ApiClient.GetAllWarehouseItemsAsync();
-        isLoading = false;
+        try
+        {
+            warehouseItems = await ApiClient.GetAllWarehouseItemsAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowMessage($"Failed to load warehouse: {ex.Message}", true);
+            warehouseItems = new();
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
-    private void OpenAddModal() => showAddModal = true;
+    private void OpenAddModal()
+    {
+        addError = null;
+        showAddModal = true;
+    }
+
     private void CloseAddModal() => showAddModal = false;
 
     private async Task SaveItem()
     {
-        if (string.IsNullOrWhiteSpace(newItem.Name)) return;
-        
-        await ApiClient.CreateWarehouseItemAsync(newItem);
-        await LoadData();
-        showAddModal = false;
-        newItem = new();
+        if (isSaving) return;
+        if (string.IsNullOrWhiteSpace(newItem.Name))
+        {
+            addError = "Name is required.";
+            return;
+        }
+
+        isSaving = true;
+        addError = null;
+        try
+        {
+            var success = await ApiClient.CreateWarehouseItemAsync(newItem);
+            if (!success)
+            {
+                addError = "Failed to save ingredient.";
+                return;
+            }
+            await LoadData();
+            showAddModal = false;
+            newItem = new();
+            ShowMessage("Ingredient saved.", false);
+        }
+        catch (Exception ex)
+        {
+            addError = $"Save failed: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void RestockItem(WarehouseItem item)
+    {
+        restockTarget = item;
+        restockQuantity = 50m;
+        restockError = null;
+    }
+
+    private void CancelRestock()
+    {
+        restockTarget = null;
+        restockError = null;
+    }
+
+    private async Task ConfirmRestock()
+    {
+        if (restockTarget is null || isRestocking) return;
+        if (restockQuantity <= 0)
+        {
+            restockError = "Quantity must be greater than 0.";
+            return;
+        }
+
+        isRestocking = true;
+        restockError = null;
+        try
+        {
+            var req = new RestockRequest(restockTarget.Name, restockQuantity, restockTarget.Unit);
+            await ApiClient.DispatchRestockAsync(req);
+            var name = restockTarget.Name;
+            restockTarget = null;
+            await LoadData();
+            ShowMessage($"Restock dispatched for {name}.", false);
+        }
+        catch (Exception ex)
+        {
+            restockError = $"Restock failed: {ex.Message}";
+        }
+        finally
+        {
+            isRestocking = false;
+        }
+    }
+
+    private void ShowMessage(string msg, bool isError)
+    {
+        pageMessage = msg;
+        pageIsError = isError;
     }
 }

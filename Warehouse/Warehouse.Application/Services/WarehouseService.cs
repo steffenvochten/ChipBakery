@@ -13,6 +13,7 @@ namespace Warehouse.Application.Services;
 
 public class WarehouseService(
     IWarehouseRepository repository,
+    IRecipeRepository recipeRepository,
     IEventPublisher eventPublisher,
     IValidator<CreateWarehouseItemRequest> createValidator,
     IValidator<UpdateWarehouseItemRequest> updateValidator,
@@ -105,18 +106,27 @@ public class WarehouseService(
 
     public async Task<RecipeCheckResponse> CheckRecipeAsync(RecipeCheckRequest request, CancellationToken ct = default)
     {
-        // In a real system, we'd lookup the recipe for the ProductId and check each ingredient.
-        // For this prototype, we'll simulate a check: every product needs some 'Flour' and 'Sugar'.
-        var items = await repository.GetAllAsync(ct);
-        
-        var flour = items.FirstOrDefault(i => i.Name.Contains("Flour", StringComparison.OrdinalIgnoreCase));
-        var sugar = items.FirstOrDefault(i => i.Name.Contains("Sugar", StringComparison.OrdinalIgnoreCase));
+        var recipe = await recipeRepository.GetByProductIdAsync(request.ProductId, ct);
+        if (recipe == null)
+        {
+            return new RecipeCheckResponse(true, "No recipe defined for this product, allowing order.");
+        }
 
-        if (flour == null || flour.Quantity < 1) 
-            return new RecipeCheckResponse(false, "Insufficient Flour in warehouse.");
-            
-        if (sugar == null || sugar.Quantity < 1) 
-            return new RecipeCheckResponse(false, "Insufficient Sugar in warehouse.");
+        var items = await repository.GetAllAsync(ct);
+
+        foreach (var ingredient in recipe.Ingredients)
+        {
+            var needed = ingredient.QuantityRequired * request.Quantity;
+            var item = items.FirstOrDefault(i =>
+                string.Equals(i.Name, ingredient.IngredientName, StringComparison.OrdinalIgnoreCase));
+
+            var have = item?.Quantity ?? 0m;
+            if (item == null || have < needed)
+            {
+                return new RecipeCheckResponse(false,
+                    $"Insufficient {ingredient.IngredientName}: need {needed}, have {have}.");
+            }
+        }
 
         return new RecipeCheckResponse(true);
     }

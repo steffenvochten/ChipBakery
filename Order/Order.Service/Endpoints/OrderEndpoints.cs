@@ -55,8 +55,8 @@ public static class OrderEndpoints
 
         group.MapPut("/{id:guid}/cancel", async (Guid id, IOrderService svc, CancellationToken ct) =>
         {
-            await svc.CancelOrderAsync(id, ct);
-            return Results.NoContent();
+            var order = await svc.CancelOrderAsync(id, ct);
+            return Results.Ok(order);
         })
         .WithName("CancelOrder")
         .WithSummary("Cancels an order. Only orders with status 'Placed' can be cancelled.");

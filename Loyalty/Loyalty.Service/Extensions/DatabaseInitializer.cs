@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Loyalty.Infrastructure.Persistence;
 
 namespace Loyalty.Service.Extensions;
@@ -8,7 +9,7 @@ public static class DatabaseInitializer
     {
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<LoyaltyDbContext>();
-        db.Database.EnsureCreated();
+        db.Database.Migrate();
         return app;
     }
 }

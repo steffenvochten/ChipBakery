@@ -2,6 +2,7 @@ using Warehouse.Application;
 using Warehouse.Infrastructure;
 using Warehouse.Service.Endpoints;
 using Warehouse.Service.Extensions;
+using Warehouse.Service.Messaging;
 using Warehouse.Service.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,9 @@ builder.Services.AddApplication();
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+// Messaging consumers
+builder.Services.AddHostedService<SupplierTransportDispatchedConsumer>();
 
 var app = builder.Build();
 

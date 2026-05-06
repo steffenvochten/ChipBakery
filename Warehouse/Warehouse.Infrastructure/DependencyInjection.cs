@@ -14,6 +14,7 @@ public static class DependencyInjection
     {
         builder.AddNpgsqlDbContext<WarehouseDbContext>("warehousedb");
         builder.Services.AddScoped<IWarehouseRepository, WarehouseItemRepository>();
+        builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
         
         // RabbitMQ Event Publisher integration
         builder.AddRabbitMQClient("rabbitmq");

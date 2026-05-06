@@ -2,6 +2,7 @@ using Loyalty.Application;
 using Loyalty.Infrastructure;
 using Loyalty.Service.Endpoints;
 using Loyalty.Service.Extensions;
+using Loyalty.Service.Messaging;
 using Loyalty.Service.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,10 @@ builder.Services.AddApplication();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddOpenApi();
+
+// RabbitMQ consumers
+builder.Services.AddHostedService<OrderPlacedConsumer>();
+builder.Services.AddHostedService<JobCompletedConsumer>();
 
 var app = builder.Build();
 

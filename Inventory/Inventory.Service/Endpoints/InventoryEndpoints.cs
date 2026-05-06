@@ -81,8 +81,8 @@ public static class InventoryEndpoints
             // This is the only place that knows about both types — the application
             // layer has no dependency on ChipBakery.Shared.
             var deductRequest = new DeductStockRequest(request.ProductId, request.Quantity);
-            await svc.DeductStockAsync(deductRequest, ct);
-            return Results.Ok();
+            var result = await svc.DeductStockAsync(deductRequest, ct);
+            return result.Success ? Results.Ok(result) : Results.BadRequest(result);
         })
         .WithName("DeductInventoryStock")
         .WithSummary("Deducts stock from an item. Called synchronously by Order.Service before accepting an order.");

@@ -15,6 +15,14 @@
         </p>
     </div>
 
+    @if (errorMessage != null)
+    {
+        <div class="rounded-3xl bg-red-100 dark:bg-red-900/30 border border-red-300/50 dark:border-red-700/40 text-red-700 dark:text-red-300 p-5 font-bold flex items-center justify-between gap-4">
+            <span>@errorMessage</span>
+            <button class="btn btn-outline py-2 text-xs" @onclick="Retry">Retry</button>
+        </div>
+    }
+
     <div class="glass-card overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full border-collapse">
@@ -80,6 +88,7 @@
     private List<BakingJob> jobs = new();
     private bool isLoading = true;
     private System.Threading.Timer? timer;
+    private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -93,15 +102,27 @@
 
     private async Task LoadData()
     {
-        try 
+        try
         {
             jobs = await ApiClient.GetAllBakingJobsAsync();
+            errorMessage = null;
         }
-        catch { /* handle error */ }
-        finally 
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load production jobs: {ex.Message}";
+            Console.Error.WriteLine(ex);
+        }
+        finally
         {
             isLoading = false;
         }
+    }
+
+    private async Task Retry()
+    {
+        isLoading = true;
+        await LoadData();
+        StateHasChanged();
     }
 
     private string GetStatusClass(string status) => status switch

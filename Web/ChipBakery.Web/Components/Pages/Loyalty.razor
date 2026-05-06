@@ -71,7 +71,13 @@
                 </div>
             </div>
         }
-        else if (hasSearched)
+        else if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="p-8 rounded-2xl bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-center">
+                <p class="text-lg font-black">@errorMessage</p>
+            </div>
+        }
+        else if (hasSearched && notFound)
         {
             <div class="p-12 text-center opacity-50">
                 <p class="text-xl font-bold">Customer not found.</p>
@@ -85,6 +91,8 @@
     private string searchId = "";
     private bool isSearching = false;
     private bool hasSearched = false;
+    private bool notFound = false;
+    private string? errorMessage;
     private CustomerLoyalty? loyalty;
 
     private async Task HandleKeyUp(KeyboardEventArgs e)
@@ -98,7 +106,28 @@
 
         isSearching = true;
         hasSearched = true;
-        loyalty = await ApiClient.GetCustomerLoyaltyAsync(customerId);
-        isSearching = false;
+        notFound = false;
+        errorMessage = null;
+        loyalty = null;
+        try
+        {
+            loyalty = await ApiClient.GetCustomerLoyaltyAsync(customerId);
+            if (loyalty is null)
+            {
+                notFound = true;
+            }
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            notFound = true;
+        }
+        catch (Exception)
+        {
+            errorMessage = "Unable to fetch loyalty info — please try again.";
+        }
+        finally
+        {
+            isSearching = false;
+        }
     }
 }

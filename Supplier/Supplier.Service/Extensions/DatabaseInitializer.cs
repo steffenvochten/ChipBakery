@@ -10,7 +10,7 @@ public static class DatabaseInitializer
         using var scope = app.ApplicationServices.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<SupplierDbContext>();
         
-        // Ensure database is created and migrations are applied
-        context.Database.EnsureCreated();
+        // Apply any pending migrations
+        context.Database.Migrate();
     }
 }

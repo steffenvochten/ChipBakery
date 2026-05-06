@@ -1,3 +1,5 @@
+using ChipBakery.Shared;
+using FluentValidation;
 using Production.Application.DTOs;
 using Production.Application.Interfaces;
 using Production.Domain.Entities;
@@ -9,6 +11,8 @@ namespace Production.Application.Services;
 public class BakingService(
     IBakingJobRepository repository,
     ITrackingService trackingService,
+    IEventPublisher publisher,
+    IValidator<ScheduleBakingJobRequest> scheduleValidator,
     ILogger<BakingService> logger) : IBakingService
 {
     public async Task<List<BakingJobDto>> GetAllJobsAsync(CancellationToken ct = default)
@@ -19,7 +23,9 @@ public class BakingService(
 
     public async Task<BakingJobDto> ScheduleJobAsync(ScheduleBakingJobRequest request, CancellationToken ct = default)
     {
-        var job = new BakingJob
+        await scheduleValidator.ValidateAndThrowAsync(request, ct);
+
+        var job = new Production.Domain.Entities.BakingJob
         {
             Id = Guid.NewGuid(),
             ProductId = request.ProductId,
@@ -29,9 +35,9 @@ public class BakingService(
 
         await repository.AddAsync(job);
         logger.LogInformation("Scheduled baking job {JobId} for product {ProductId}", job.Id, request.ProductId);
-        
+
         await trackingService.UpdateJobStatusAsync(job.Id, job.Status);
-        
+
         return new BakingJobDto(job.Id, job.ProductId, job.Quantity, job.Status, job.StartTime, job.EndTime);
     }
 
@@ -47,7 +53,7 @@ public class BakingService(
         job.Status = "Baking";
         job.StartTime = DateTime.UtcNow;
         await repository.UpdateAsync(job);
-        
+
         logger.LogInformation("Started baking job {JobId}", jobId);
         await trackingService.UpdateJobStatusAsync(jobId, job.Status);
     }
@@ -64,8 +70,12 @@ public class BakingService(
         job.Status = "Completed";
         job.EndTime = DateTime.UtcNow;
         await repository.UpdateAsync(job);
-        
+
         logger.LogInformation("Completed baking job {JobId}", jobId);
         await trackingService.UpdateJobStatusAsync(jobId, job.Status);
+
+        await publisher.PublishAsync(
+            new JobCompletedEvent(job.Id, job.ProductId, job.Quantity, DateTime.UtcNow),
+            ct);
     }
 }

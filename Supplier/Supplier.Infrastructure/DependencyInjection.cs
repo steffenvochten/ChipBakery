@@ -14,6 +14,7 @@ public static class DependencyInjection
     {
         builder.AddNpgsqlDbContext<SupplierDbContext>("supplierdb");
         builder.Services.AddScoped<ISupplierTransportRepository, SupplierTransportRepository>();
+        builder.Services.AddScoped<IIngredientSupplyRepository, IngredientSupplyRepository>();
         
         // RabbitMQ Event Publisher integration
         builder.AddRabbitMQClient("rabbitmq");

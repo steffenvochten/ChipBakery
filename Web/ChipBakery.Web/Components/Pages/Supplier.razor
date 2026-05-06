@@ -1,0 +1,321 @@
+@page "/supplier"
+@rendermode InteractiveServer
+@using ChipBakery.Shared
+@using ChipBakery.Web.Services
+@inject BakeryApiClient ApiClient
+
+<PageTitle>Supplier | Chip Bakery</PageTitle>
+
+<div class="space-y-12 animate-in fade-in duration-700">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-4xl sm:text-5xl font-black tracking-tight text-bakery-crust dark:text-amber-400">
+                Supplier
+            </h1>
+            <p class="text-lg text-bakery-crust/60 dark:text-stone-400 font-medium">
+                Manage scheduled supplies and ingredient transports.
+            </p>
+        </div>
+        <button class="btn btn-primary shadow-lg shadow-bakery-crust/20" @onclick="OpenCreateModal">
+            <span class="text-lg mr-2">+</span> Add Supply
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="rounded-3xl bg-red-100 dark:bg-red-900/30 border border-red-300/50 dark:border-red-700/40 text-red-700 dark:text-red-300 p-5 font-bold flex items-center justify-between gap-4">
+            <span>@_errorMessage</span>
+            <button class="btn btn-outline py-2 text-xs" @onclick="ClearError">Dismiss</button>
+        </div>
+    }
+
+    <!-- Ingredient Supplies -->
+    <section class="space-y-6">
+        <div>
+            <span class="text-xs font-black uppercase tracking-widest text-bakery-crust dark:text-amber-500 block">Scheduled</span>
+            <h2 class="text-2xl font-serif font-black text-bakery-crust dark:text-stone-100">Ingredient Supplies</h2>
+        </div>
+
+        @if (_isLoadingSupplies)
+        {
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                @for (int i = 0; i < 3; i++)
+                {
+                    <div class="glass-card h-40 animate-pulse"></div>
+                }
+            </div>
+        }
+        else if (_supplies == null || !_supplies.Any())
+        {
+            <div class="glass-card p-12 text-center">
+                <h3 class="text-xl font-serif font-black mb-2">No scheduled supplies</h3>
+                <p class="text-stone-500">Create one to start tracking ingredient deliveries.</p>
+            </div>
+        }
+        else
+        {
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach (var s in _supplies)
+                {
+                    <div class="glass-card p-6 flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-xl font-bold text-bakery-crust dark:text-stone-100">@s.IngredientName</h3>
+                                <span class="text-xs font-black uppercase tracking-widest text-bakery-crust/40 dark:text-stone-500">@s.Quantity</span>
+                            </div>
+                            <p class="text-sm text-stone-500 mb-3">From <span class="font-bold">@s.SupplierName</span></p>
+                            <div class="text-2xl font-black text-amber-700 dark:text-amber-500">
+                                $@s.Price.ToString("0.00")
+                            </div>
+                            <p class="text-xs text-stone-400 mt-2">@s.ScheduledDate.ToLocalTime().ToString("MMM dd, yyyy")</p>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-bakery-crust/5 flex gap-2">
+                            <button class="w-8 h-8 flex items-center justify-center rounded-xl bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="Edit" @onclick="() => OpenEditModal(s)">
+                                ✎
+                            </button>
+                            <button class="w-8 h-8 flex items-center justify-center rounded-xl bg-red-100 text-red-700 hover:bg-red-500 hover:text-white transition-all shadow-sm" title="Delete" @onclick="() => DeleteSupply(s.Id)">
+                                ×
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+
+    <!-- Recent Transports -->
+    <section class="space-y-6">
+        <div>
+            <span class="text-xs font-black uppercase tracking-widest text-bakery-crust dark:text-amber-500 block">Logbook</span>
+            <h2 class="text-2xl font-serif font-black text-bakery-crust dark:text-stone-100">Recent Transports</h2>
+        </div>
+
+        @if (_isLoadingTransports)
+        {
+            <div class="space-y-3">
+                @for (int i = 0; i < 4; i++)
+                {
+                    <div class="glass-card h-16 animate-pulse"></div>
+                }
+            </div>
+        }
+        else if (_transports == null || !_transports.Any())
+        {
+            <div class="glass-card p-12 text-center">
+                <p class="text-stone-500">No transports yet.</p>
+            </div>
+        }
+        else
+        {
+            <div class="glass-card overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-bakery-crust/5 border-b border-bakery-crust/10">
+                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60">Ingredient</th>
+                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60">Quantity</th>
+                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60">Time</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-bakery-crust/5">
+                        @foreach (var t in _transports)
+                        {
+                            <tr class="hover:bg-bakery-crust/5 transition-colors">
+                                <td class="px-6 py-4 font-bold">@t.IngredientName</td>
+                                <td class="px-6 py-4">@t.Quantity.ToString("N2") <span class="text-stone-500 text-xs">@t.Unit</span></td>
+                                <td class="px-6 py-4 text-sm text-stone-500">@t.Timestamp.ToLocalTime().ToString("MMM dd, HH:mm")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</div>
+
+@if (_isModalOpen)
+{
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-stone-950/40 backdrop-blur-sm" @onclick="CloseModal"></div>
+        <div class="relative glass-card w-full max-w-md p-8 shadow-2xl animate-in fade-in zoom-in duration-300">
+            <button class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-bakery-crust/5 transition-colors text-2xl" @onclick="CloseModal">×</button>
+
+            <div class="mb-8">
+                <span class="text-xs font-black uppercase tracking-widest text-bakery-crust dark:text-amber-500 mb-2 block">Supply</span>
+                <h3 class="text-3xl font-serif font-black">@(_isEditMode ? "Edit Supply" : "New Supply")</h3>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_modalError))
+            {
+                <div class="mb-4 px-4 py-3 rounded-2xl bg-red-100 text-red-700 text-sm font-bold">@_modalError</div>
+            }
+
+            <EditForm Model="_model" OnValidSubmit="SaveSupply" class="space-y-6">
+                <div class="form-group">
+                    <label class="form-label">Ingredient Name</label>
+                    <InputText class="form-control" @bind-Value="_model.IngredientName" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Supplier Name</label>
+                    <InputText class="form-control" @bind-Value="_model.SupplierName" required />
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label">Quantity</label>
+                        <InputNumber class="form-control" @bind-Value="_model.Quantity" min="1" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Price ($)</label>
+                        <InputNumber class="form-control" @bind-Value="_model.Price" min="0.01" step="0.01" required />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Scheduled Date</label>
+                    <InputDate class="form-control" @bind-Value="_model.ScheduledDate" required />
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" class="btn btn-outline flex-1" @onclick="CloseModal">Cancel</button>
+                    <button type="submit" class="btn btn-accent flex-1 shadow-lg shadow-amber-500/20" disabled="@_isSaving">
+                        @(_isSaving ? "Saving..." : "Save Supply")
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    private List<IngredientSupplyDto>? _supplies;
+    private List<SupplierTransportDto>? _transports;
+    private bool _isLoadingSupplies = true;
+    private bool _isLoadingTransports = true;
+    private string? _errorMessage;
+
+    private bool _isModalOpen;
+    private bool _isEditMode;
+    private Guid? _editingId;
+    private SupplyModel _model = new();
+    private bool _isSaving;
+    private string? _modalError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(LoadSupplies(), LoadTransports());
+    }
+
+    private async Task LoadSupplies()
+    {
+        _isLoadingSupplies = true;
+        try
+        {
+            _supplies = await ApiClient.GetAllIngredientSuppliesAsync();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to load supplies: {ex.Message}";
+            _supplies = new();
+        }
+        finally
+        {
+            _isLoadingSupplies = false;
+        }
+    }
+
+    private async Task LoadTransports()
+    {
+        _isLoadingTransports = true;
+        try
+        {
+            _transports = await ApiClient.GetAllSupplierTransportsAsync();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to load transports: {ex.Message}";
+            _transports = new();
+        }
+        finally
+        {
+            _isLoadingTransports = false;
+        }
+    }
+
+    private void OpenCreateModal()
+    {
+        _isEditMode = false;
+        _editingId = null;
+        _model = new SupplyModel { Quantity = 10, Price = 1.00m, ScheduledDate = DateTime.Today.AddDays(1) };
+        _modalError = null;
+        _isModalOpen = true;
+    }
+
+    private void OpenEditModal(IngredientSupplyDto s)
+    {
+        _isEditMode = true;
+        _editingId = s.Id;
+        _model = new SupplyModel
+        {
+            IngredientName = s.IngredientName,
+            SupplierName = s.SupplierName,
+            Quantity = s.Quantity,
+            Price = s.Price,
+            ScheduledDate = s.ScheduledDate
+        };
+        _modalError = null;
+        _isModalOpen = true;
+    }
+
+    private void CloseModal() => _isModalOpen = false;
+    private void ClearError() => _errorMessage = null;
+
+    private async Task SaveSupply()
+    {
+        if (_isSaving) return;
+        _isSaving = true;
+        _modalError = null;
+        try
+        {
+            if (_isEditMode && _editingId.HasValue)
+            {
+                var req = new UpdateIngredientSupplyRequest(_model.IngredientName, _model.SupplierName, _model.Quantity, _model.Price, _model.ScheduledDate);
+                await ApiClient.UpdateIngredientSupplyAsync(_editingId.Value, req);
+            }
+            else
+            {
+                var req = new CreateIngredientSupplyRequest(_model.IngredientName, _model.SupplierName, _model.Quantity, _model.Price, _model.ScheduledDate);
+                await ApiClient.CreateIngredientSupplyAsync(req);
+            }
+            CloseModal();
+            await LoadSupplies();
+        }
+        catch (Exception ex)
+        {
+            _modalError = $"Save failed: {ex.Message}";
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private async Task DeleteSupply(Guid id)
+    {
+        try
+        {
+            await ApiClient.DeleteIngredientSupplyAsync(id);
+            await LoadSupplies();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Delete failed: {ex.Message}";
+        }
+    }
+
+    private class SupplyModel
+    {
+        public string IngredientName { get; set; } = "";
+        public string SupplierName { get; set; } = "";
+        public int Quantity { get; set; }
+        public decimal Price { get; set; }
+        public DateTime ScheduledDate { get; set; } = DateTime.Today;
+    }
+}

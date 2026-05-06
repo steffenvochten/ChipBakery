@@ -28,5 +28,5 @@ public interface IOrderService
     /// Throws <see cref="Order.Domain.Exceptions.OrderNotFoundException"/> if not found.
     /// Throws <see cref="System.InvalidOperationException"/> if the order is not in a cancellable state.
     /// </summary>
-    Task CancelOrderAsync(Guid id, CancellationToken ct = default);
+    Task<OrderDto> CancelOrderAsync(Guid id, CancellationToken ct = default);
 }
