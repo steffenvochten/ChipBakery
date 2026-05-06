@@ -1,6 +1,49 @@
-@Loyalty.Service_HostAddress = http://localhost:5118
+@host = https://localhost:7024
+@memberId = a1b2c3d4-e5f6-a7b8-c9d0-e1f2a3b4c5d6
 
-GET {{Loyalty.Service_HostAddress}}/weatherforecast/
-Accept: application/json
+### Get All Members
+GET {{host}}/api/loyalty
 
-###
+### Get Member By Id
+GET {{host}}/api/loyalty/{{memberId}}
+
+### Create Member
+POST {{host}}/api/loyalty
+Content-Type: application/json
+
+{
+  "customerName": "Alice Wonder",
+  "email": "alice@example.com"
+}
+
+### Add Points
+POST {{host}}/api/loyalty/add-points
+Content-Type: application/json
+
+{
+  "memberId": "{{memberId}}",
+  "points": 100
+}
+
+### Deduct Points
+POST {{host}}/api/loyalty/deduct-points
+Content-Type: application/json
+
+{
+  "memberId": "{{memberId}}",
+  "points": 50
+}
+
+### Deduct Points (Insufficient)
+POST {{host}}/api/loyalty/deduct-points
+Content-Type: application/json
+
+{
+  "memberId": "{{memberId}}",
+  "points": 9999
+}
+# Expected: 400 Bad Request (Validation) or 409 (Domain Logic)
+
+### Get Non-existent Member
+GET {{host}}/api/loyalty/00000000-0000-0000-0000-000000000000
+# Expected: 404 Not Found

@@ -1,0 +1,105 @@
+using ChipBakery.Shared;
+using FluentValidation;
+using Microsoft.Extensions.Logging;
+using Warehouse.Application.DTOs;
+using Warehouse.Application.Interfaces;
+using Warehouse.Application.Mapping;
+using Warehouse.Domain.Entities;
+using Warehouse.Domain.Events;
+using Warehouse.Domain.Exceptions;
+using Warehouse.Domain.Interfaces;
+
+namespace Warehouse.Application.Services;
+
+public class WarehouseService(
+    IWarehouseRepository repository,
+    IEventPublisher eventPublisher,
+    IValidator<CreateWarehouseItemRequest> createValidator,
+    IValidator<UpdateWarehouseItemRequest> updateValidator,
+    IValidator<DeductStockRequest> deductValidator,
+    ILogger<WarehouseService> logger) : IWarehouseService
+{
+    public async Task<List<WarehouseItemDto>> GetAllItemsAsync(CancellationToken ct = default)
+    {
+        var items = await repository.GetAllAsync(ct);
+        return items.ToDtoList();
+    }
+
+    public async Task<WarehouseItemDto> GetItemByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        var item = await repository.GetByIdAsync(id, ct);
+        if (item == null) throw new WarehouseItemNotFoundException(id);
+        return item.ToDto();
+    }
+
+    public async Task<WarehouseItemDto> CreateItemAsync(CreateWarehouseItemRequest request, CancellationToken ct = default)
+    {
+        await createValidator.ValidateAndThrowAsync(request, ct);
+
+        var item = new WarehouseItem
+        {
+            Id = Guid.NewGuid(),
+            Name = request.Name,
+            Quantity = request.Quantity,
+            Unit = request.Unit
+        };
+
+        await repository.AddAsync(item, ct);
+        await repository.SaveChangesAsync(ct);
+
+        logger.LogInformation("Created warehouse item {ItemName} ({ItemId})", item.Name, item.Id);
+        await eventPublisher.PublishAsync(new WarehouseItemCreatedEvent(item.Id, item.Name, item.Quantity, item.Unit), ct);
+
+        return item.ToDto();
+    }
+
+    public async Task<WarehouseItemDto> UpdateItemAsync(Guid id, UpdateWarehouseItemRequest request, CancellationToken ct = default)
+    {
+        await updateValidator.ValidateAndThrowAsync(request, ct);
+
+        var item = await repository.GetByIdAsync(id, ct);
+        if (item == null) throw new WarehouseItemNotFoundException(id);
+
+        item.Name = request.Name;
+        item.Quantity = request.Quantity;
+        item.Unit = request.Unit;
+
+        repository.Update(item);
+        await repository.SaveChangesAsync(ct);
+
+        logger.LogInformation("Updated warehouse item {ItemId}", id);
+
+        return item.ToDto();
+    }
+
+    public async Task DeleteItemAsync(Guid id, CancellationToken ct = default)
+    {
+        var item = await repository.GetByIdAsync(id, ct);
+        if (item == null) throw new WarehouseItemNotFoundException(id);
+
+        repository.Delete(item);
+        await repository.SaveChangesAsync(ct);
+
+        logger.LogInformation("Deleted warehouse item {ItemId}", id);
+    }
+
+    public async Task DeductStockAsync(DeductStockRequest request, CancellationToken ct = default)
+    {
+        await deductValidator.ValidateAndThrowAsync(request, ct);
+
+        var item = await repository.GetByIdAsync(request.ItemId, ct);
+        if (item == null) throw new WarehouseItemNotFoundException(request.ItemId);
+
+        if (item.Quantity < request.Quantity)
+        {
+            throw new InsufficientStockException(item.Name, request.Quantity, item.Quantity, item.Unit);
+        }
+
+        item.Quantity -= request.Quantity;
+        repository.Update(item);
+        await repository.SaveChangesAsync(ct);
+
+        logger.LogInformation("Deducted {Quantity}{Unit} from warehouse item {ItemName}", request.Quantity, item.Unit, item.Name);
+        await eventPublisher.PublishAsync(new StockDeductedEvent(item.Id, request.Quantity, item.Quantity), ct);
+    }
+}

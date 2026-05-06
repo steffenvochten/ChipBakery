@@ -1,6 +1,36 @@
-@Supplier.Service_HostAddress = http://localhost:5024
+@host = https://localhost:7070
+@supplyId = f2a1b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c
 
-GET {{Supplier.Service_HostAddress}}/weatherforecast/
-Accept: application/json
+### Get All Supplies
+GET {{host}}/api/supplier
 
-###
+### Get Supply By Id
+GET {{host}}/api/supplier/{{supplyId}}
+
+### Create Supply
+POST {{host}}/api/supplier
+Content-Type: application/json
+
+{
+  "ingredientName": "Sugar",
+  "supplierName": "Sweet Co",
+  "quantity": 500,
+  "price": 300.0,
+  "scheduledDate": "2026-05-15T10:00:00Z"
+}
+
+### Update Supply
+PUT {{host}}/api/supplier/{{supplyId}}
+Content-Type: application/json
+
+{
+  "quantity": 1200,
+  "price": 550.0
+}
+
+### Delete Supply
+DELETE {{host}}/api/supplier/{{supplyId}}
+
+### Get Non-existent Supply
+GET {{host}}/api/supplier/00000000-0000-0000-0000-000000000000
+# Expected: 404 Not Found

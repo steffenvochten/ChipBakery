@@ -9,8 +9,8 @@ builder.AddServiceDefaults();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddHttpClient("Inventory", client => client.BaseAddress = new Uri("https+http://inventory-service"));
-builder.Services.AddHttpClient("Order", client => client.BaseAddress = new Uri("https+http://order-service"));
+builder.Services.AddHttpClient("Inventory", client => client.BaseAddress = new Uri("https://inventory-service"));
+builder.Services.AddHttpClient("Order", client => client.BaseAddress = new Uri("https://order-service"));
 builder.Services.AddScoped<BakeryApiClient>();
 
 var app = builder.Build();

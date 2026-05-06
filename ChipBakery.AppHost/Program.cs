@@ -13,6 +13,7 @@ var warehouseDb = postgres.AddDatabase("warehousedb");
 var supplierDb = postgres.AddDatabase("supplierdb");
 var inventoryDb = postgres.AddDatabase("inventorydb");
 var loyaltyDb = postgres.AddDatabase("loyaltydb");
+var productionDb = postgres.AddDatabase("productiondb");
 
 // Live tracking cache and event messaging
 var redis = builder.AddRedis("redis")
@@ -25,44 +26,47 @@ var rabbitmq = builder.AddRabbitMQ("rabbitmq")
 // 2. Core Services (Web APIs)
 // ==========================================
 
-var inventoryService = builder.AddProject<Projects.Inventory_Service>("inventory-service")
+var inventoryService = builder.AddProject<Projects.Inventory_Service>("inventory-service", launchProfileName: "https")
     .WithReference(inventoryDb)
     .WaitFor(inventoryDb);
 
-var warehouseService = builder.AddProject<Projects.Warehouse_Service>("warehouse-service")
+var warehouseService = builder.AddProject<Projects.Warehouse_Service>("warehouse-service", launchProfileName: "https")
     .WithReference(warehouseDb)
     .WaitFor(warehouseDb);
 
-var supplierService = builder.AddProject<Projects.Supplier_Service>("supplier-service")
+var supplierService = builder.AddProject<Projects.Supplier_Service>("supplier-service", launchProfileName: "https")
     .WithReference(supplierDb)
     .WaitFor(supplierDb);
 
-var loyaltyService = builder.AddProject<Projects.Loyalty_Service>("loyalty-service")
+var loyaltyService = builder.AddProject<Projects.Loyalty_Service>("loyalty-service", launchProfileName: "https")
     .WithReference(loyaltyDb)
     .WaitFor(loyaltyDb);
 
-var orderService = builder.AddProject<Projects.Order_Service>("order-service")
+var orderService = builder.AddProject<Projects.Order_Service>("order-service", launchProfileName: "https")
     .WithReference(orderDb)
     .WaitFor(orderDb)
     .WithReference(rabbitmq)
-    .WaitFor(rabbitmq); // Needs RabbitMQ to publish "OrderPlaced" events
+    .WaitFor(rabbitmq)
+    .WithReference(inventoryService); // Needs to discover inventory-service to deduct stock
 
 // ==========================================
 // 3. Background Worker
 // ==========================================
 
 // Consumes "OrderPlaced" events from RabbitMQ and stores tracking schedules in Redis
-var productionWorker = builder.AddProject<Projects.Production_Service>("production-service")
+var productionWorker = builder.AddProject<Projects.Production_Service>("production-service", launchProfileName: "https")
     .WithReference(rabbitmq)
     .WaitFor(rabbitmq)
     .WithReference(redis)
-    .WaitFor(redis);
+    .WaitFor(redis)
+    .WithReference(productionDb)
+    .WaitFor(productionDb);
 
 // ==========================================
 // 4. Frontend (Blazor Web)
 // ==========================================
 
-var webFrontend = builder.AddProject<Projects.ChipBakery_Web>("web")
+var webFrontend = builder.AddProject<Projects.ChipBakery_Web>("web", launchProfileName: "https")
     .WithReference(orderService)
     .WaitFor(orderService)
     .WithReference(inventoryService)

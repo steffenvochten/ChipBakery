@@ -1,0 +1,28 @@
+@host = https://localhost:7155
+@scheduleId = 11111111-2222-3333-4444-555555555555
+
+### Get All Schedules
+GET {{host}}/api/production
+
+### Create Schedule
+POST {{host}}/api/production
+Content-Type: application/json
+
+{
+  "productName": "Sourdough Bread",
+  "quantity": 20,
+  "scheduledTime": "2026-05-10T08:00:00Z"
+}
+
+### Get Schedule By Id
+GET {{host}}/api/production/{{scheduleId}}
+
+### Start Baking
+POST {{host}}/api/production/{{scheduleId}}/start
+
+### Complete Baking
+POST {{host}}/api/production/{{scheduleId}}/complete
+
+### Get Non-existent Schedule
+GET {{host}}/api/production/00000000-0000-0000-0000-000000000000
+# Expected: 404 Not Found

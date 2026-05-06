@@ -1,4 +1,8 @@
 <Solution>
   <Project Path="../ChipBakery.ServiceDefaults/ChipBakery.ServiceDefaults.csproj" />
+  <Project Path="../ChipBakery.Shared/ChipBakery.Shared.csproj" />
+  <Project Path="Loyalty.Domain/Loyalty.Domain.csproj" />
+  <Project Path="Loyalty.Application/Loyalty.Application.csproj" />
+  <Project Path="Loyalty.Infrastructure/Loyalty.Infrastructure.csproj" />
   <Project Path="Loyalty.Service/Loyalty.Service.csproj" />
 </Solution>

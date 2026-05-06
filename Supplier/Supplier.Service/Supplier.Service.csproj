@@ -12,6 +12,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\ChipBakery.ServiceDefaults\ChipBakery.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\ChipBakery.Shared\ChipBakery.Shared.csproj" />
+    <ProjectReference Include="..\Supplier.Domain\Supplier.Domain.csproj" />
+    <ProjectReference Include="..\Supplier.Application\Supplier.Application.csproj" />
+    <ProjectReference Include="..\Supplier.Infrastructure\Supplier.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

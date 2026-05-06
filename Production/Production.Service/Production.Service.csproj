@@ -1,17 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk.Worker">
-
+<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>dotnet-Production.Service-8762ada7-cf63-4d22-9a09-6ed21eee2932</UserSecretsId>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.7" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\ChipBakery.ServiceDefaults\ChipBakery.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\ChipBakery.Shared\ChipBakery.Shared.csproj" />
+    <ProjectReference Include="..\Production.Domain\Production.Domain.csproj" />
+    <ProjectReference Include="..\Production.Application\Production.Application.csproj" />
+    <ProjectReference Include="..\Production.Infrastructure\Production.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

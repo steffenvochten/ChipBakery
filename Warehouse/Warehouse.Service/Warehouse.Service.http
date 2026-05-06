@@ -1,6 +1,44 @@
-@Warehouse.Service_HostAddress = http://localhost:5096
+@host = https://localhost:7229
+@itemId = 1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d
 
-GET {{Warehouse.Service_HostAddress}}/weatherforecast/
-Accept: application/json
+### Get All Items
+GET {{host}}/api/warehouse
 
-###
+### Get Item By Id
+GET {{host}}/api/warehouse/{{itemId}}
+
+### Create Item
+POST {{host}}/api/warehouse
+Content-Type: application/json
+
+{
+  "name": "Salt",
+  "quantity": 50,
+  "unit": "kg"
+}
+
+### Update Item
+PUT {{host}}/api/warehouse/{{itemId}}
+Content-Type: application/json
+
+{
+  "name": "Bread Flour (Premium)",
+  "quantity": 600,
+  "unit": "kg"
+}
+
+### Deduct Stock
+POST {{host}}/api/warehouse/deduct
+Content-Type: application/json
+
+{
+  "itemId": "{{itemId}}",
+  "quantity": 10
+}
+
+### Delete Item
+DELETE {{host}}/api/warehouse/{{itemId}}
+
+### Get Non-existent Item
+GET {{host}}/api/warehouse/00000000-0000-0000-0000-000000000000
+# Expected: 404 Not Found

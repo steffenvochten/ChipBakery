@@ -30,10 +30,10 @@ public static class DependencyInjection
         builder.Services.AddScoped<IEventPublisher, MockEventPublisher>();
 
         // Named HttpClient for Inventory.Service.
-        // "https+http://inventory-service" is resolved by Aspire service discovery at runtime.
+        // "https://inventory-service" is resolved by Aspire service discovery at runtime.
         // The name "Inventory" is used by HttpInventoryClient via IHttpClientFactory.CreateClient("Inventory").
         builder.Services.AddHttpClient("Inventory", client =>
-            client.BaseAddress = new Uri("https+http://inventory-service"));
+            client.BaseAddress = new Uri("https://inventory-service"));
 
         builder.Services.AddScoped<IInventoryClient, HttpInventoryClient>();
 
