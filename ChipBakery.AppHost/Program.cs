@@ -85,6 +85,8 @@ var webFrontend = builder.AddProject<Projects.ChipBakery_Web>("web", launchProfi
     .WaitFor(warehouseService)
     .WithReference(loyaltyService)
     .WaitFor(loyaltyService)
+    .WithReference(supplierService)
+    .WaitFor(supplierService)
     .WithReference(productionWorker)
     .WaitFor(productionWorker)
     .WithExternalHttpEndpoints(); // Exposes the frontend to your local browser
