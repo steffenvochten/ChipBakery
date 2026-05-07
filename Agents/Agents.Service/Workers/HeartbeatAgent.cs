@@ -6,6 +6,7 @@ namespace Agents.Service.Workers;
 
 public class HeartbeatAgent(
     IHubContext<AgentActivityHub> hub,
+    AgentSettings settings,
     ILogger<HeartbeatAgent> logger) : BackgroundService
 {
     private static readonly TimeSpan Interval = TimeSpan.FromSeconds(5);
@@ -27,21 +28,20 @@ public class HeartbeatAgent(
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var activity = new AgentActivity(
-                AgentName: "System",
-                AgentType: "Heartbeat",
-                Action: "heartbeat",
-                Narration: Messages[_tick % Messages.Length],
-                Timestamp: DateTime.UtcNow);
-
-            await hub.Clients.All.SendAsync("ReceiveActivity", activity, stoppingToken);
-            _tick++;
-
-            try
+            if (!settings.IsPaused)
             {
-                await Task.Delay(Interval, stoppingToken);
+                var activity = new AgentActivity(
+                    AgentName: "System",
+                    AgentType: "Heartbeat",
+                    Action: "heartbeat",
+                    Narration: Messages[_tick % Messages.Length],
+                    Timestamp: DateTime.UtcNow);
+
+                await hub.Clients.All.SendAsync("ReceiveActivity", activity, stoppingToken);
+                _tick++;
             }
-            catch (TaskCanceledException) { /* shutting down */ }
+
+            await AgentDelay.SmartAsync(Interval, settings, stoppingToken);
         }
     }
 }

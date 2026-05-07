@@ -61,5 +61,21 @@ public sealed class AgentActivityClient : IAsyncDisposable
             await _connection.StartAsync(ct);
     }
 
+    public Task SetSpeedAsync(double multiplier) =>
+        _connection.State == HubConnectionState.Connected
+            ? _connection.InvokeAsync("SetSpeed", multiplier)
+            : Task.CompletedTask;
+
+    public Task SetPausedAsync(bool paused) =>
+        _connection.State == HubConnectionState.Connected
+            ? _connection.InvokeAsync("SetPaused", paused)
+            : Task.CompletedTask;
+
+    public void ClearActivities()
+    {
+        lock (_lock) { _activities.Clear(); }
+        OnChange?.Invoke();
+    }
+
     public async ValueTask DisposeAsync() => await _connection.DisposeAsync();
 }

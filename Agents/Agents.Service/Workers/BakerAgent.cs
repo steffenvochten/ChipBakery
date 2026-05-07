@@ -17,6 +17,7 @@ namespace Agents.Service.Workers;
 public class BakerAgent(
     IServiceProvider services,
     IAgentBrain brain,
+    AgentSettings settings,
     IHubContext<AgentActivityHub> hub,
     ILogger<BakerAgent> logger) : BackgroundService
 {
@@ -46,7 +47,7 @@ public class BakerAgent(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogInformation("BakerAgent started");
-        await DelayAsync(TimeSpan.FromSeconds(8 + Random.Shared.Next(2, 5)), stoppingToken);
+        await AgentDelay.SmartAsync(TimeSpan.FromSeconds(8 + Random.Shared.Next(2, 5)), settings, stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -54,7 +55,7 @@ public class BakerAgent(
             catch (OperationCanceledException) { break; }
             catch (Exception ex) { logger.LogError(ex, "BakerAgent tick threw"); }
 
-            await DelayAsync(Interval, stoppingToken);
+            await AgentDelay.SmartAsync(Interval, settings, stoppingToken);
         }
     }
 
@@ -209,11 +210,6 @@ public class BakerAgent(
         logger.LogInformation("[Baker] {Action}: {Narration}", action, narration);
     }
 
-    private static async Task DelayAsync(TimeSpan delay, CancellationToken ct)
-    {
-        try { await Task.Delay(delay, ct); }
-        catch (TaskCanceledException) { }
-    }
 
     private sealed record InventorySnapshot(Guid Id, string Name, decimal Price, int Quantity);
 

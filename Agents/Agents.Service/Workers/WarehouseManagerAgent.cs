@@ -14,6 +14,7 @@ namespace Agents.Service.Workers;
 public class WarehouseManagerAgent(
     IServiceProvider services,
     IAgentBrain brain,
+    AgentSettings settings,
     IHubContext<AgentActivityHub> hub,
     ILogger<WarehouseManagerAgent> logger) : BackgroundService
 {
@@ -31,7 +32,7 @@ public class WarehouseManagerAgent(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogInformation("WarehouseManagerAgent started");
-        await DelayAsync(TimeSpan.FromSeconds(18 + Random.Shared.Next(2, 6)), stoppingToken);
+        await AgentDelay.SmartAsync(TimeSpan.FromSeconds(18 + Random.Shared.Next(2, 6)), settings, stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -39,7 +40,7 @@ public class WarehouseManagerAgent(
             catch (OperationCanceledException) { break; }
             catch (Exception ex) { logger.LogError(ex, "WarehouseManagerAgent tick threw"); }
 
-            await DelayAsync(Interval, stoppingToken);
+            await AgentDelay.SmartAsync(Interval, settings, stoppingToken);
         }
     }
 
@@ -155,11 +156,6 @@ public class WarehouseManagerAgent(
         logger.LogInformation("[Warehouse Mgr] {Action}: {Narration}", action, narration);
     }
 
-    private static async Task DelayAsync(TimeSpan delay, CancellationToken ct)
-    {
-        try { await Task.Delay(delay, ct); }
-        catch (TaskCanceledException) { }
-    }
 
     // Minimal projection of the production job — we only need Id and Status.
     private sealed record StalledJob(Guid Id, Guid ProductId, decimal Quantity, string Status,

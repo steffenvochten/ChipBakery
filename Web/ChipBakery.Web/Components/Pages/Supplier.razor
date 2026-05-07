@@ -3,6 +3,8 @@
 @using ChipBakery.Shared
 @using ChipBakery.Web.Services
 @inject BakeryApiClient ApiClient
+@inject TimezoneService TzService
+@implements IDisposable
 
 <PageTitle>Supplier | Chip Bakery</PageTitle>
 
@@ -67,7 +69,7 @@
                             <div class="text-2xl font-black text-amber-700 dark:text-amber-500">
                                 $@s.Price.ToString("0.00")
                             </div>
-                            <p class="text-xs text-stone-400 mt-2">@s.ScheduledDate.ToLocalTime().ToString("MMM dd, yyyy")</p>
+                            <p class="text-xs text-stone-400 mt-2">@TzService.FormatShort(s.ScheduledDate)</p>
                         </div>
                         <div class="mt-6 pt-4 border-t border-bakery-crust/5 flex gap-2">
                             <button class="w-8 h-8 flex items-center justify-center rounded-xl bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="Edit" @onclick="() => OpenEditModal(s)">
@@ -122,7 +124,7 @@
                             <tr class="hover:bg-bakery-crust/5 transition-colors">
                                 <td class="px-6 py-4 font-bold">@t.IngredientName</td>
                                 <td class="px-6 py-4">@t.Quantity.ToString("N2") <span class="text-stone-500 text-xs">@t.Unit</span></td>
-                                <td class="px-6 py-4 text-sm text-stone-500">@t.Timestamp.ToLocalTime().ToString("MMM dd, HH:mm")</td>
+                                <td class="px-6 py-4 text-sm text-stone-500">@TzService.FormatShort(t.Timestamp)</td>
                             </tr>
                         }
                     </tbody>
@@ -197,15 +199,20 @@
     private SupplyModel _model = new();
     private bool _isSaving;
     private string? _modalError;
+    private System.Threading.Timer? _timer;
 
     protected override async Task OnInitializedAsync()
     {
         await Task.WhenAll(LoadSupplies(), LoadTransports());
+        _timer = new System.Threading.Timer(async _ => await InvokeAsync(async () =>
+        {
+            await Task.WhenAll(LoadSupplies(), LoadTransports());
+            StateHasChanged();
+        }), null, 2000, 2000);
     }
 
     private async Task LoadSupplies()
     {
-        _isLoadingSupplies = true;
         try
         {
             _supplies = await ApiClient.GetAllIngredientSuppliesAsync();
@@ -223,7 +230,6 @@
 
     private async Task LoadTransports()
     {
-        _isLoadingTransports = true;
         try
         {
             _transports = await ApiClient.GetAllSupplierTransportsAsync();
@@ -238,6 +244,8 @@
             _isLoadingTransports = false;
         }
     }
+
+    public void Dispose() => _timer?.Dispose();
 
     private void OpenCreateModal()
     {

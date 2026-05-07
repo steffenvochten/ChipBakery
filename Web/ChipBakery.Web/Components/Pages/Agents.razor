@@ -4,6 +4,7 @@
 @using ChipBakery.Web.Services
 @using Microsoft.AspNetCore.SignalR.Client
 @inject AgentActivityClient ActivityClient
+@inject TimezoneService TzService
 @implements IDisposable
 
 <PageTitle>Agents - Chip Bakery</PageTitle>
@@ -35,6 +36,27 @@
             @(ActivityClient.State == HubConnectionState.Connected ? "Live"
               : ActivityClient.State == HubConnectionState.Reconnecting ? "Reconnecting…"
               : "Connecting…")
+        </div>
+    </div>
+
+    <!-- Controls strip -->
+    <div class="glass-card p-4 flex flex-wrap items-center gap-4">
+        <div class="flex items-center gap-3">
+            <span class="text-xs font-black uppercase tracking-widest text-bakery-crust/50 dark:text-stone-500">Speed</span>
+            <input type="range" min="0.5" max="5" step="0.5"
+                   value="@_speed"
+                   @onchange="async e => { _speed = Convert.ToDouble(e.Value); await ApplySpeed(); }"
+                   class="w-28 accent-amber-500" />
+            <span class="text-sm font-black text-amber-600 dark:text-amber-400 w-8 tabular-nums">@_speed.ToString("0.#")×</span>
+        </div>
+        <div class="flex gap-2 ml-auto">
+            <button class="btn @(_isPaused ? "btn-primary" : "btn-outline") text-sm py-2 px-4"
+                    @onclick="TogglePause">
+                @(_isPaused ? "Resume" : "Pause")
+            </button>
+            <button class="btn btn-outline text-sm py-2 px-4" @onclick="ResetFeed">
+                Clear
+            </button>
         </div>
     </div>
 
@@ -104,7 +126,7 @@
                         </div>
 
                         <time class="text-xs font-mono text-bakery-crust/30 dark:text-stone-600 flex-shrink-0 mt-1">
-                            @activity.Timestamp.ToLocalTime().ToString("HH:mm:ss")
+                            @TzService.FormatTime(activity.Timestamp)
                         </time>
                     </div>
                 }
@@ -128,6 +150,9 @@
         new("🍞", "Baker",            "Baker",           true),
     ];
 
+    private double _speed = 1.0;
+    private bool _isPaused = false;
+
     protected override async Task OnInitializedAsync()
     {
         ActivityClient.OnChange += OnActivityReceived;
@@ -135,6 +160,16 @@
     }
 
     private async void OnActivityReceived() => await InvokeAsync(StateHasChanged);
+
+    private async Task ApplySpeed() => await ActivityClient.SetSpeedAsync(_speed);
+
+    private async Task TogglePause()
+    {
+        _isPaused = !_isPaused;
+        await ActivityClient.SetPausedAsync(_isPaused);
+    }
+
+    private void ResetFeed() => ActivityClient.ClearActivities();
 
     public void Dispose() => ActivityClient.OnChange -= OnActivityReceived;
 

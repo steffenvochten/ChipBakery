@@ -16,6 +16,7 @@ namespace Agents.Service.Workers;
 public class SupplierAgentWorker(
     IServiceProvider services,
     IAgentBrain brain,
+    AgentSettings settings,
     IHubContext<AgentActivityHub> hub,
     ILogger<SupplierAgentWorker> logger) : BackgroundService
 {
@@ -72,7 +73,7 @@ public class SupplierAgentWorker(
 
     private async Task RunLoopAsync(SupplierPersona persona, int startDelay, CancellationToken ct)
     {
-        await DelayAsync(TimeSpan.FromSeconds(startDelay + Random.Shared.Next(2, 6)), ct);
+        await AgentDelay.SmartAsync(TimeSpan.FromSeconds(startDelay + Random.Shared.Next(2, 6)), settings, ct);
 
         while (!ct.IsCancellationRequested)
         {
@@ -80,7 +81,7 @@ public class SupplierAgentWorker(
             catch (OperationCanceledException) { break; }
             catch (Exception ex) { logger.LogError(ex, "{Agent} tick threw", persona.Name); }
 
-            await DelayAsync(persona.Interval, ct);
+            await AgentDelay.SmartAsync(persona.Interval, settings, ct);
         }
     }
 
@@ -201,9 +202,4 @@ public class SupplierAgentWorker(
         logger.LogInformation("[{Agent}] {Action}: {Narration}", persona.Name, action, narration);
     }
 
-    private static async Task DelayAsync(TimeSpan delay, CancellationToken ct)
-    {
-        try { await Task.Delay(delay, ct); }
-        catch (TaskCanceledException) { }
-    }
 }

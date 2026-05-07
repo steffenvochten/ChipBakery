@@ -1,4 +1,7 @@
 @inherits LayoutComponentBase
+@inject IJSRuntime JS
+@inject ChipBakery.Web.Services.TimezoneService TzService
+@implements IDisposable
 
 <div class="min-h-screen flex flex-col">
     <header class="sticky top-0 z-50 py-4 px-4 sm:px-8">
@@ -33,3 +36,19 @@
         </div>
     </div>
 </div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !TzService.IsInitialized)
+        {
+            // JS getTimezoneOffset() → minutes to subtract from local to get UTC
+            // e.g. CEST (UTC+2) returns -120
+            var offset = await JS.InvokeAsync<int>("eval", "new Date().getTimezoneOffset()");
+            TzService.Initialize(offset);
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose() { }
+}

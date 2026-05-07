@@ -3,6 +3,8 @@
 @using ChipBakery.Shared
 @using ChipBakery.Web.Services
 @inject BakeryApiClient ApiClient
+@inject TimezoneService TzService
+@implements IDisposable
 
 <PageTitle>Order History | Chip Bakery</PageTitle>
 
@@ -12,9 +14,6 @@
             <h1 class="text-4xl font-serif font-black text-bakery-crust dark:text-amber-500">Order History</h1>
             <p class="text-stone-500 font-medium">Track your artisanal bakes and deliveries.</p>
         </div>
-        <button class="btn btn-outline" @onclick="LoadOrders" disabled="@_isLoading">
-            <span class="mr-2">↻</span> Refresh
-        </button>
     </div>
 
     @if (_isLoading)
@@ -58,7 +57,7 @@
                                     <div class="text-xs font-black text-stone-400 font-mono tracking-tighter">@order.Id.ToString().ToUpper()[..8]</div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <div class="text-sm font-medium opacity-80">@order.OrderDate.ToString("g")</div>
+                                    <div class="text-sm font-medium opacity-80">@TzService.FormatLong(order.OrderDate)</div>
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="font-bold text-stone-900 dark:text-stone-100">@order.CustomerName</div>
@@ -124,27 +123,28 @@
     private bool _isCancelling = false;
     private string _notificationMessage = "";
     private bool _notificationIsError = false;
+    private System.Threading.Timer? _timer;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadOrders();
+        _timer = new System.Threading.Timer(async _ => await InvokeAsync(async () =>
+        {
+            await LoadOrders();
+            StateHasChanged();
+        }), null, 2000, 2000);
     }
 
     private async Task LoadOrders()
     {
-        _isLoading = true;
         try
         {
-            _orders = await ApiClient.GetAllOrdersAsync();
-            // Fetch products to map names if we haven't already
-            if (!_productNames.Any())
-            {
-                var inventory = await ApiClient.GetAllInventoryAsync();
-                foreach (var p in inventory)
-                {
-                    _productNames[p.Id] = p.Name;
-                }
-            }
+            var ordersTask    = ApiClient.GetAllOrdersAsync();
+            var inventoryTask = ApiClient.GetAllInventoryAsync();
+            await Task.WhenAll(ordersTask, inventoryTask);
+
+            _orders = ordersTask.Result;
+            _productNames = inventoryTask.Result.ToDictionary(p => p.Id, p => p.Name);
         }
         catch (Exception ex)
         {
@@ -156,6 +156,8 @@
             _isLoading = false;
         }
     }
+
+    public void Dispose() => _timer?.Dispose();
 
     private string GetProductName(Guid id)
     {

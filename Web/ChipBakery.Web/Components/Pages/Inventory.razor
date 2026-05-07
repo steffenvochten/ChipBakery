@@ -3,6 +3,7 @@
 @using ChipBakery.Shared
 @using ChipBakery.Web.Services
 @inject BakeryApiClient ApiClient
+@implements IDisposable
 
 <PageTitle>Inventory Management | Chip Bakery</PageTitle>
 
@@ -143,7 +144,7 @@
 @code {
     private List<InventoryItem>? _inventory;
     private bool _isLoading = true;
-    
+
     // Modal state
     private bool _isModalOpen = false;
     private bool _isEditMode = false;
@@ -153,15 +154,20 @@
 
     private string _notificationMessage = "";
     private bool _notificationIsError = false;
+    private System.Threading.Timer? _timer;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadInventory();
+        _timer = new System.Threading.Timer(async _ => await InvokeAsync(async () =>
+        {
+            await LoadInventory();
+            StateHasChanged();
+        }), null, 2000, 2000);
     }
 
     private async Task LoadInventory()
     {
-        _isLoading = true;
         try
         {
             _inventory = await ApiClient.GetAllInventoryAsync();
@@ -176,6 +182,8 @@
             _isLoading = false;
         }
     }
+
+    public void Dispose() => _timer?.Dispose();
 
     private void OpenCreateModal()
     {

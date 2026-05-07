@@ -1,3 +1,4 @@
+using Agents.Service;
 using Agents.Service.Brain;
 using Agents.Service.Hubs;
 using Agents.Service.Workers;
@@ -15,6 +16,9 @@ builder.Services.AddHttpClient("Order",      c => c.BaseAddress = new Uri("https
 builder.Services.AddHttpClient("Warehouse",  c => c.BaseAddress = new Uri("https://warehouse-service"));
 builder.Services.AddHttpClient("Supplier",   c => c.BaseAddress = new Uri("https://supplier-service"));
 builder.Services.AddHttpClient("Production", c => c.BaseAddress = new Uri("https://production-service"));
+
+// ── Agent settings (speed multiplier + pause flag, mutated via SignalR hub) ───
+builder.Services.AddSingleton<AgentSettings>();
 
 // ── Agent brain (LLM via Ollama, degrades gracefully to rule-based fallback) ─
 builder.Services.AddSingleton<IAgentBrain, OllamaAgentBrain>();

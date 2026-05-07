@@ -15,6 +15,7 @@ namespace Agents.Service.Workers;
 public class ClientAgentWorker(
     IServiceProvider services,
     IAgentBrain brain,
+    AgentSettings settings,
     IHubContext<AgentActivityHub> hub,
     ILogger<ClientAgentWorker> logger) : BackgroundService
 {
@@ -70,7 +71,7 @@ public class ClientAgentWorker(
     private async Task RunLoopAsync(Persona persona, int startDelay, CancellationToken ct)
     {
         // Stagger initial start so all three agents don't fire at the same moment.
-        await DelayAsync(TimeSpan.FromSeconds(startDelay + Random.Shared.Next(2, 8)), ct);
+        await AgentDelay.SmartAsync(TimeSpan.FromSeconds(startDelay + Random.Shared.Next(2, 8)), settings, ct);
 
         while (!ct.IsCancellationRequested)
         {
@@ -78,7 +79,7 @@ public class ClientAgentWorker(
             catch (OperationCanceledException) { break; }
             catch (Exception ex) { logger.LogError(ex, "{Agent} tick threw", persona.Name); }
 
-            await DelayAsync(persona.Interval, ct);
+            await AgentDelay.SmartAsync(persona.Interval, settings, ct);
         }
     }
 
@@ -174,9 +175,4 @@ public class ClientAgentWorker(
         logger.LogInformation("[{Agent}] {Action}: {Narration}", persona.Name, action, narration);
     }
 
-    private static async Task DelayAsync(TimeSpan delay, CancellationToken ct)
-    {
-        try { await Task.Delay(delay, ct); }
-        catch (TaskCanceledException) { }
-    }
 }

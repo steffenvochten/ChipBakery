@@ -3,6 +3,7 @@
 @using ChipBakery.Shared
 @using ChipBakery.Web.Services
 @inject BakeryApiClient ApiClient
+@implements IDisposable
 
 <PageTitle>Chip Bakery | Artisanal Excellence</PageTitle>
 
@@ -152,15 +153,20 @@
     private bool _isOrdering = false;
     private string _notificationMessage = "";
     private bool _notificationIsError = false;
+    private System.Threading.Timer? _timer;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadProducts();
+        _timer = new System.Threading.Timer(async _ => await InvokeAsync(async () =>
+        {
+            await LoadProducts();
+            StateHasChanged();
+        }), null, 2000, 2000);
     }
 
     private async Task LoadProducts()
     {
-        _isLoading = true;
         try
         {
             _products = await ApiClient.GetAvailableProductsAsync();
@@ -175,6 +181,8 @@
             _isLoading = false;
         }
     }
+
+    public void Dispose() => _timer?.Dispose();
 
     private string GetImageForProduct(string name)
     {

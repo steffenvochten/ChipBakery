@@ -3,6 +3,7 @@
 @using ChipBakery.Shared
 @using ChipBakery.Web.Services
 @inject BakeryApiClient ApiClient
+@implements IDisposable
 
 <PageTitle>Warehouse - Chip Bakery</PageTitle>
 
@@ -147,15 +148,20 @@
     private decimal restockQuantity = 50m;
     private bool isRestocking = false;
     private string? restockError;
+    private System.Threading.Timer? _timer;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+        _timer = new System.Threading.Timer(async _ => await InvokeAsync(async () =>
+        {
+            await LoadData();
+            StateHasChanged();
+        }), null, 2000, 2000);
     }
 
     private async Task LoadData()
     {
-        isLoading = true;
         try
         {
             warehouseItems = await ApiClient.GetAllWarehouseItemsAsync();
@@ -170,6 +176,8 @@
             isLoading = false;
         }
     }
+
+    public void Dispose() => _timer?.Dispose();
 
     private void OpenAddModal()
     {
