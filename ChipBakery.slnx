@@ -34,6 +34,9 @@
   <Project Path="Supplier/Supplier.Infrastructure/Supplier.Infrastructure.csproj" />
   <Project Path="Supplier/Supplier.Service/Supplier.Service.csproj" />
 
+  <!-- Agents Service -->
+  <Project Path="Agents/Agents.Service/Agents.Service.csproj" />
+
   <!-- Warehouse Service -->
   <Project Path="Warehouse/Warehouse.Domain/Warehouse.Domain.csproj" />
   <Project Path="Warehouse/Warehouse.Application/Warehouse.Application.csproj" />

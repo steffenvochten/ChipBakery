@@ -77,7 +77,25 @@ var productionWorker = builder.AddProject<Projects.Production_Service>("producti
     .WaitFor(warehouseService);
 
 // ==========================================
-// 4. Frontend (Blazor Web)
+// 4. Agents Service
+// ==========================================
+
+// Hosts autonomous agent loops (ClientAgent, SupplierAgent, WarehouseManagerAgent, BakerAgent)
+// and the SignalR AgentActivityHub that streams every agent action to the Web frontend.
+var agentsService = builder.AddProject<Projects.Agents_Service>("agents-service", launchProfileName: "https")
+    .WithReference(rabbitmq)
+    .WaitFor(rabbitmq)
+    .WithReference(warehouseService)
+    .WaitFor(warehouseService)
+    .WithReference(inventoryService)
+    .WaitFor(inventoryService)
+    .WithReference(orderService)
+    .WaitFor(orderService)
+    .WithReference(supplierService)
+    .WaitFor(supplierService);
+
+// ==========================================
+// 5. Frontend (Blazor Web)
 // ==========================================
 
 var webFrontend = builder.AddProject<Projects.ChipBakery_Web>("web", launchProfileName: "https")
@@ -93,6 +111,8 @@ var webFrontend = builder.AddProject<Projects.ChipBakery_Web>("web", launchProfi
     .WaitFor(supplierService)
     .WithReference(productionWorker)
     .WaitFor(productionWorker)
+    .WithReference(agentsService)
+    .WaitFor(agentsService)
     .WithExternalHttpEndpoints(); // Exposes the frontend to your local browser
 
 builder.Build().Run();

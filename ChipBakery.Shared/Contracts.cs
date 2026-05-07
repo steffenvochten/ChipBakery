@@ -189,3 +189,16 @@ public static class BakingJobStatus
     public const string Baking = "Baking";
     public const string Completed = "Completed";
 }
+
+// ─── Agent Activity ───────────────────────────────────────────────────────────
+
+/// <summary>
+/// A single observable action taken by an autonomous agent.
+/// Broadcast via SignalR from Agents.Service to the Web frontend in real time.
+/// </summary>
+public record AgentActivity(
+    string AgentName,
+    string AgentType,
+    string Action,
+    string Narration,
+    DateTime Timestamp);

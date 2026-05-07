@@ -16,6 +16,7 @@ builder.Services.AddHttpClient("Loyalty", client => client.BaseAddress = new Uri
 builder.Services.AddHttpClient("Production", client => client.BaseAddress = new Uri("https://production-service"));
 builder.Services.AddHttpClient("Supplier", c => c.BaseAddress = new Uri("https://supplier-service"));
 builder.Services.AddScoped<BakeryApiClient>();
+builder.Services.AddSingleton<AgentActivityClient>();
 
 var app = builder.Build();
 
