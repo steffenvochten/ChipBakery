@@ -118,14 +118,14 @@
 
     private static readonly AgentCard[] _roster =
     [
-        new("🛒", "Sarah",    "Regular client",   false),
-        new("☕", "Marco",    "Café bulk-buyer",  false),
-        new("🌸", "Lin",      "Curious newcomer", false),
-        new("🌾", "Acme Flour Co",    "Supplier",  false),
-        new("🍬", "Sweet Sugar Inc",  "Supplier",  false),
-        new("🥛", "Dairy Direct",     "Supplier",  false),
-        new("📦", "Warehouse Mgr",    "Manager",   false),
-        new("🍞", "Baker",            "Baker",      false),
+        new("🛒", "Sarah",            "Regular client",  true),
+        new("☕", "Marco",            "Café bulk-buyer", true),
+        new("🌸", "Lin",              "Curious newcomer",true),
+        new("🌾", "Acme Flour Co.",   "Flour supplier",  true),
+        new("🍬", "Sweet Sugar Inc.", "Sugar supplier",  true),
+        new("🥛", "Dairy Direct",     "Dairy supplier",  true),
+        new("📦", "Warehouse Mgr",    "Manager",         false),
+        new("🍞", "Baker",            "Baker",           false),
     ];
 
     protected override async Task OnInitializedAsync()

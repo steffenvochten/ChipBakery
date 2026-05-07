@@ -16,6 +16,13 @@ var inventoryDb = postgres.AddDatabase("inventorydb");
 var loyaltyDb = postgres.AddDatabase("loyaltydb");
 var productionDb = postgres.AddDatabase("productiondb");
 
+// Ollama — local LLM server for AI agent decisions
+// Model is pulled automatically on first use; pull it once with:
+//   docker exec chipbakery-ollama ollama pull llama3.2:3b
+var ollama = builder.AddContainer("ollama", "ollama/ollama")
+                    .WithVolume("chipbakery-ollama-models", "/root/.ollama")
+                    .WithHttpEndpoint(port: 11434, targetPort: 11434, name: "http");
+
 // Live tracking cache and event messaging
 var redis = builder.AddRedis("redis")
                    .WithRedisCommander(); // Optional: UI for viewing Redis data
@@ -92,7 +99,8 @@ var agentsService = builder.AddProject<Projects.Agents_Service>("agents-service"
     .WithReference(orderService)
     .WaitFor(orderService)
     .WithReference(supplierService)
-    .WaitFor(supplierService);
+    .WaitFor(supplierService)
+    .WithEnvironment("OLLAMA_BASE_URL", ollama.GetEndpoint("http"));
 
 // ==========================================
 // 5. Frontend (Blazor Web)
