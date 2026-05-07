@@ -5,12 +5,12 @@ namespace Warehouse.Service.Extensions;
 
 public static class DatabaseInitializer
 {
-    public static WebApplication InitializeDatabase(this WebApplication app)
+    public static async Task<WebApplication> InitializeDatabaseAsync(this WebApplication app)
     {
-        using var scope = app.Services.CreateScope();
+        await using var scope = app.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<WarehouseDbContext>();
-        db.Database.Migrate();
-        WarehouseSeedData.SeedAsync(db).GetAwaiter().GetResult();
+        await db.Database.MigrateAsync();
+        await WarehouseSeedData.SeedAsync(db);
         return app;
     }
 }

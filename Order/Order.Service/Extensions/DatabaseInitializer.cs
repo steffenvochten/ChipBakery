@@ -13,12 +13,12 @@ public static class DatabaseInitializer
     /// Ensures the database schema is created and seed data is applied.
     /// Called once during startup before the app begins accepting requests.
     /// </summary>
-    public static WebApplication InitializeDatabase(this WebApplication app)
+    public static async Task<WebApplication> InitializeDatabaseAsync(this WebApplication app)
     {
-        using var scope = app.Services.CreateScope();
+        await using var scope = app.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
 
-        db.Database.Migrate();
+        await db.Database.MigrateAsync();
 
         return app;
     }

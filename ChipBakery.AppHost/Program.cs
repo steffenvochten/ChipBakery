@@ -6,6 +6,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 // PostgreSQL Server with separate databases for each service
 var postgres = builder.AddPostgres("postgres")
+                      .WithDataVolume()
                       .WithPgAdmin(); // Optional: Includes pgAdmin for easy management
 
 var orderDb = postgres.AddDatabase("orderdb");

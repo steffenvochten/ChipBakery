@@ -31,10 +31,10 @@ app.UseExceptionHandler();          // Must come before endpoint mapping
 
 // ─── Database Initialization ───────────────────────────────────────────────────
 
-app.InitializeDatabase();
+await app.InitializeDatabaseAsync();
 
 // ─── Endpoints ────────────────────────────────────────────────────────────────
 
 app.MapOrderEndpoints();
 
-app.Run();
+await app.RunAsync();

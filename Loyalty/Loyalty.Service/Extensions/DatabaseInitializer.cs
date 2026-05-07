@@ -5,11 +5,11 @@ namespace Loyalty.Service.Extensions;
 
 public static class DatabaseInitializer
 {
-    public static WebApplication InitializeDatabase(this WebApplication app)
+    public static async Task<WebApplication> InitializeDatabaseAsync(this WebApplication app)
     {
-        using var scope = app.Services.CreateScope();
+        await using var scope = app.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<LoyaltyDbContext>();
-        db.Database.Migrate();
+        await db.Database.MigrateAsync();
         return app;
     }
 }

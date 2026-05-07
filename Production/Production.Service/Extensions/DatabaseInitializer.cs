@@ -6,12 +6,10 @@ namespace Production.Service.Extensions;
 
 public static class DatabaseInitializer
 {
-    public static void InitializeDatabase(this IApplicationBuilder app)
+    public static async Task InitializeDatabaseAsync(this IApplicationBuilder app)
     {
-        using var scope = app.ApplicationServices.CreateScope();
+        await using var scope = app.ApplicationServices.CreateAsyncScope();
         var context = scope.ServiceProvider.GetRequiredService<ProductionDbContext>();
-        
-        // Ensure database is created and migrations are applied
-        context.Database.Migrate();
+        await context.Database.MigrateAsync();
     }
 }

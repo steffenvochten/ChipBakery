@@ -33,7 +33,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseExceptionHandler();
-app.InitializeDatabase();
+await app.InitializeDatabaseAsync();
 app.MapWarehouseEndpoints();
 
-app.Run();
+await app.RunAsync();

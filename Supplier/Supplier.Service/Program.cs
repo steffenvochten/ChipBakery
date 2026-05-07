@@ -29,8 +29,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseExceptionHandler();
-app.InitializeDatabase();
+await app.InitializeDatabaseAsync();
 
 app.MapSupplierEndpoints();
 
-app.Run();
+await app.RunAsync();
