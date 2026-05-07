@@ -47,4 +47,11 @@ public interface IInventoryService
     /// Publishes <see cref="Inventory.Domain.Events.StockDeductedEvent"/> (and optionally <see cref="Inventory.Domain.Events.StockDepletedEvent"/>) on success.
     /// </summary>
     Task<InventoryDeductResult> DeductStockAsync(DeductStockRequest request, CancellationToken ct = default);
+
+    /// <summary>
+    /// Increments the stock of an existing item by <paramref name="addQuantity"/>.
+    /// Called by the Baker agent after a production job completes to put finished goods on the shelf.
+    /// Throws <see cref="Inventory.Domain.Exceptions.ItemNotFoundException"/> if not found.
+    /// </summary>
+    Task<InventoryItemDto> RestockAsync(Guid id, int addQuantity, CancellationToken ct = default);
 }

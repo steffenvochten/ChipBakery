@@ -182,4 +182,25 @@ public class InventoryService : IInventoryService
 
         return new InventoryDeductResult(true, item.Price);
     }
+
+    /// <inheritdoc/>
+    public async Task<InventoryItemDto> RestockAsync(Guid id, int addQuantity, CancellationToken ct = default)
+    {
+        if (addQuantity <= 0)
+            throw new ArgumentException("Add quantity must be positive.", nameof(addQuantity));
+
+        var item = await _repository.GetByIdAsync(id, ct)
+            ?? throw new ItemNotFoundException(id);
+
+        item.Quantity += addQuantity;
+
+        _repository.Update(item);
+        await _repository.SaveChangesAsync(ct);
+
+        _logger.LogInformation(
+            "Restocked item {ItemId} ({ItemName}) +{Added}. New total: {Total}",
+            item.Id, item.Name, addQuantity, item.Quantity);
+
+        return item.ToDto();
+    }
 }

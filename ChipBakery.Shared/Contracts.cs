@@ -190,6 +190,11 @@ public static class BakingJobStatus
     public const string Completed = "Completed";
 }
 
+// ─── Inventory restock ────────────────────────────────────────────────────────
+
+/// <summary>Request body for POST /api/inventory/{id}/restock.</summary>
+public record AddInventoryStockRequest(int Quantity);
+
 // ─── Agent Activity ───────────────────────────────────────────────────────────
 
 /// <summary>

@@ -7,9 +7,12 @@ using Microsoft.AspNetCore.SignalR;
 namespace Agents.Service.Workers;
 
 /// <summary>
-/// Baker agent that monitors the production queue and narrates every job
-/// status transition. Uses the LLM to generate flavourful first-person narration;
-/// falls back to canned messages when Ollama is unavailable.
+/// Baker agent that:
+///  1. Monitors all inventory items and proactively schedules production runs
+///     when any product stock falls below the reorder threshold.
+///  2. Narrates every production job status transition via LLM.
+///  3. Calls POST /api/inventory/{id}/restock when a job completes so that
+///     finished goods actually appear on the shelf for clients to order.
 /// </summary>
 public class BakerAgent(
     IServiceProvider services,
@@ -19,18 +22,22 @@ public class BakerAgent(
 {
     private static readonly TimeSpan Interval = TimeSpan.FromSeconds(12);
 
+    private const int LowStockThreshold = 10;  // units below which a restock batch is triggered
+    private const int BatchSize          = 20;  // units baked per production run
+
     private const string SystemPrompt =
         "You are the Baker at Chip Bakery — skilled, a little floury, and passionate about your craft. " +
         "You narrate your baking work in short, vivid first-person sentences. " +
         "Keep it under 20 words and sound like a real baker, not a robot.";
 
-    // Tracks jobId → last observed status
+    // jobId → last observed status
     private readonly Dictionary<Guid, string> _jobStates = new();
 
-    // Product name cache; refreshed every N ticks
+    // jobs for which we have already posted an inventory restock (avoid double-crediting)
+    private readonly HashSet<Guid> _restockedJobs = new();
+
+    // productId → name (populated from full inventory list each tick)
     private Dictionary<Guid, string> _productNames = new();
-    private int _tickCount = 0;
-    private const int ProductCacheRefreshEvery = 8;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -49,52 +56,81 @@ public class BakerAgent(
 
     private async Task TickAsync(CancellationToken ct)
     {
-        _tickCount++;
-
         using var scope = services.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IHttpClientFactory>();
 
-        // ── 1. Refresh product name cache periodically ────────────────────
-        if (_tickCount == 1 || _tickCount % ProductCacheRefreshEvery == 0)
-            await RefreshProductNamesAsync(factory, ct);
+        var inventoryClient = factory.CreateClient("Inventory");
+        var productionClient = factory.CreateClient("Production");
+
+        // ── 1. Fetch ALL inventory items (includes zero-stock) ────────────
+        List<InventorySnapshot> allItems;
+        try { allItems = await inventoryClient.GetFromJsonAsync<List<InventorySnapshot>>("/api/inventory", ct) ?? []; }
+        catch (Exception ex) { logger.LogDebug(ex, "Baker could not reach inventory service"); return; }
+
+        // Rebuild product name cache from the full list
+        _productNames = allItems.ToDictionary(p => p.Id, p => p.Name);
 
         // ── 2. Fetch all production jobs ───────────────────────────────────
-        var production = factory.CreateClient("Production");
-        List<JobSnapshot>? jobs;
-        try { jobs = await production.GetFromJsonAsync<List<JobSnapshot>>("/api/production", ct); }
-        catch (Exception ex)
+        List<JobSnapshot> jobs;
+        try { jobs = await productionClient.GetFromJsonAsync<List<JobSnapshot>>("/api/production", ct) ?? []; }
+        catch (Exception ex) { logger.LogDebug(ex, "Baker could not reach production service"); return; }
+
+        // Product IDs that already have a non-completed production job in flight
+        var inProduction = jobs
+            .Where(j => j.Status != BakingJobStatus.Completed)
+            .Select(j => j.ProductId)
+            .ToHashSet();
+
+        // ── 3. Schedule production for low-stock items ─────────────────────
+        foreach (var item in allItems)
         {
-            logger.LogDebug(ex, "Baker could not reach production service");
-            return;
+            if (item.Quantity >= LowStockThreshold) continue;
+            if (inProduction.Contains(item.Id)) continue; // already queued
+
+            var body = new { ProductId = item.Id, Quantity = (decimal)BatchSize };
+            var resp = await productionClient.PostAsJsonAsync("/api/production/schedule", body, ct);
+
+            if (resp.IsSuccessStatusCode)
+            {
+                inProduction.Add(item.Id); // prevent re-scheduling within same tick
+                await BroadcastAsync("scheduled-production",
+                    $"Only {item.Quantity} {item.Name} left — kicking off a batch of {BatchSize}.", ct);
+            }
         }
 
-        if (jobs == null || jobs.Count == 0) return;
-
-        // ── 3. Detect transitions and narrate ─────────────────────────────
+        // ── 4. Handle job transitions: narrate + restock on completion ─────
         int narrated = 0;
         foreach (var job in jobs)
         {
-            if (narrated >= 2) break; // Cap LLM calls per tick
-
             _jobStates.TryGetValue(job.Id, out var prevStatus);
-
-            if (prevStatus == job.Status) continue; // No change
-
+            if (prevStatus == job.Status) continue;
             _jobStates[job.Id] = job.Status;
 
-            if (prevStatus == null)
+            // Restock inventory the first time we see a job reach Completed
+            if (job.Status == BakingJobStatus.Completed
+                && prevStatus != null
+                && prevStatus != BakingJobStatus.Completed
+                && _restockedJobs.Add(job.Id))
             {
-                // Newly appeared job — only narrate if it's already active (not just Scheduled)
-                if (job.Status == BakingJobStatus.Baking || job.Status == BakingJobStatus.AwaitingIngredients)
-                    await NarrateTransitionAsync(job, null, job.Status, ct);
-                continue;
+                var addQty = (int)Math.Ceiling(job.Quantity);
+                var restockResp = await inventoryClient.PostAsJsonAsync(
+                    $"/api/inventory/{job.ProductId}/restock",
+                    new AddInventoryStockRequest(addQty), ct);
+
+                if (!restockResp.IsSuccessStatusCode)
+                    logger.LogWarning("Inventory restock failed for product {ProductId}: HTTP {Status}",
+                        job.ProductId, (int)restockResp.StatusCode);
             }
 
-            await NarrateTransitionAsync(job, prevStatus, job.Status, ct);
-            narrated++;
+            // Narrate the transition (cap at 2 LLM calls per tick)
+            if (narrated < 2)
+            {
+                await NarrateTransitionAsync(job, prevStatus, job.Status, ct);
+                narrated++;
+            }
         }
 
-        // Remove jobs no longer returned by the API (completed and cleaned up)
+        // Prune jobs that have been removed from the production API response
         var currentIds = jobs.Select(j => j.Id).ToHashSet();
         foreach (var stale in _jobStates.Keys.Except(currentIds).ToList())
             _jobStates.Remove(stale);
@@ -110,30 +146,29 @@ public class BakerAgent(
         {
             (_, BakingJobStatus.Baking) =>
                 ("started-baking",
-                 $"Firing up the oven — baking {qty} {productName}!"),
+                 $"Fired up the oven — baking {qty} {productName}!"),
 
             (BakingJobStatus.Baking, BakingJobStatus.Completed) =>
                 ("batch-completed",
-                 $"Fresh batch done — {qty} {productName} out of the oven."),
+                 $"Fresh batch done — {qty} {productName} on the shelf."),
 
             (_, BakingJobStatus.Completed) =>
                 ("batch-completed",
-                 $"Wrapped up a {qty}-unit {productName} batch."),
+                 $"Wrapped up {qty} {productName} and restocked the shelf."),
 
             (_, BakingJobStatus.AwaitingIngredients) =>
                 ("awaiting-ingredients",
-                 $"Can't start {qty} {productName} — short on ingredients. Waiting on a delivery."),
+                 $"Can't start {qty} {productName} — short on ingredients, waiting on delivery."),
 
             (BakingJobStatus.AwaitingIngredients, _) =>
                 ("ingredients-arrived",
-                 $"Ingredients just arrived — resuming the {productName} batch!"),
+                 $"Ingredients arrived — resuming the {productName} batch!"),
 
             _ => ("status-update", $"Job for {qty} {productName} is now {to}.")
         };
 
-        // Ask LLM for colourful narration
         var context = $"""
-            Situation: {(from == null ? $"Job just appeared as {to}" : $"Job changed from {from} to {to}")}
+            Situation: {(from == null ? $"Job appeared as {to}" : $"Job changed from {from} to {to}")}
             Product: {productName}, Quantity: {qty}
 
             Write one short sentence (under 20 words) in first person as the Baker.
@@ -144,21 +179,6 @@ public class BakerAgent(
         var narration   = TryParseNarration(llmResponse) ?? fallback;
 
         await BroadcastAsync(action, narration, ct);
-    }
-
-    private async Task RefreshProductNamesAsync(IHttpClientFactory factory, CancellationToken ct)
-    {
-        try
-        {
-            var inventory = factory.CreateClient("Inventory");
-            var products  = await inventory.GetFromJsonAsync<List<ProductItem>>("/api/inventory/available", ct);
-            if (products != null)
-                _productNames = products.ToDictionary(p => p.Id, p => p.Name);
-        }
-        catch (Exception ex)
-        {
-            logger.LogDebug(ex, "Baker could not refresh product names");
-        }
     }
 
     private static string? TryParseNarration(string response)
@@ -181,6 +201,8 @@ public class BakerAgent(
         try { await Task.Delay(delay, ct); }
         catch (TaskCanceledException) { }
     }
+
+    private sealed record InventorySnapshot(Guid Id, string Name, decimal Price, int Quantity);
 
     private sealed record JobSnapshot(
         Guid Id, Guid ProductId, decimal Quantity, string Status,

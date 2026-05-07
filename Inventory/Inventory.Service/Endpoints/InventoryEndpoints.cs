@@ -73,7 +73,15 @@ public static class InventoryEndpoints
         .WithName("DeleteInventoryItem")
         .WithSummary("Permanently removes an inventory item from the catalogue.");
 
-        // ─── Internal endpoint (called by Order.Service) ──────────────────────────
+        // ─── Internal endpoints ───────────────────────────────────────────────────
+
+        group.MapPost("/{id:guid}/restock", async (Guid id, AddInventoryStockRequest request, IInventoryService svc, CancellationToken ct) =>
+        {
+            var item = await svc.RestockAsync(id, request.Quantity, ct);
+            return Results.Ok(item);
+        })
+        .WithName("RestockInventoryItem")
+        .WithSummary("Adds finished-goods stock after a baking job completes. Called by the Baker agent.");
 
         group.MapPost("/deduct", async (OrderRequest request, IInventoryService svc, CancellationToken ct) =>
         {
