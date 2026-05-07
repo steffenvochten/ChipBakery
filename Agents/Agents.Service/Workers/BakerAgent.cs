@@ -39,6 +39,10 @@ public class BakerAgent(
     // productId → name (populated from full inventory list each tick)
     private Dictionary<Guid, string> _productNames = new();
 
+    // Jobs that were already Completed when the agent first started — don't retroactively restock those
+    private bool _startupScanDone = false;
+    private readonly DateTime _startedAt = DateTime.UtcNow;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogInformation("BakerAgent started");
@@ -98,6 +102,14 @@ public class BakerAgent(
             }
         }
 
+        // On first tick, mark all already-completed jobs so we don't retroactively restock them
+        if (!_startupScanDone)
+        {
+            _startupScanDone = true;
+            foreach (var j in jobs.Where(j => j.Status == BakingJobStatus.Completed))
+                _restockedJobs.Add(j.Id);
+        }
+
         // ── 4. Handle job transitions: narrate + restock on completion ─────
         int narrated = 0;
         foreach (var job in jobs)
@@ -106,11 +118,12 @@ public class BakerAgent(
             if (prevStatus == job.Status) continue;
             _jobStates[job.Id] = job.Status;
 
-            // Restock inventory the first time we see a job reach Completed
-            if (job.Status == BakingJobStatus.Completed
-                && prevStatus != null
-                && prevStatus != BakingJobStatus.Completed
-                && _restockedJobs.Add(job.Id))
+            // Restock inventory the first time we observe a job as Completed.
+            // prevStatus may be null when a job races through Scheduled→Baking→Completed
+            // within a single 12s poll interval — we still need to restock in that case.
+            // _restockedJobs guards against double-crediting, and startup scan above
+            // prevents retroactively restocking jobs that completed before we started.
+            if (job.Status == BakingJobStatus.Completed && _restockedJobs.Add(job.Id))
             {
                 var addQty = (int)Math.Ceiling(job.Quantity);
                 var restockResp = await inventoryClient.PostAsJsonAsync(
