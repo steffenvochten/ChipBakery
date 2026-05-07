@@ -52,6 +52,21 @@ public record RecipeCheckRequest(Guid ProductId, int Quantity);
 
 public record RecipeCheckResponse(bool Available, string? Message = null);
 
+/// <summary>
+/// Atomic "check + deduct" request used by Production.Service when a baking job starts.
+/// If all required ingredients are present in sufficient quantity, the warehouse deducts them
+/// in a single transaction; otherwise nothing is deducted and the response carries the shortage detail.
+/// </summary>
+public record ConsumeRecipeRequest(Guid ProductId, int Quantity);
+
+public record ConsumeRecipeResponse(
+    bool Consumed,
+    string? ShortageIngredientName = null,
+    decimal? ShortageQuantityNeeded = null,
+    decimal? ShortageQuantityAvailable = null,
+    string? ShortageUnit = null,
+    string? Message = null);
+
 public class CreateWarehouseItemRequest
 {
     public string Name { get; set; } = string.Empty;
@@ -146,3 +161,31 @@ public record SupplierTransportDispatchedEvent(
     decimal Quantity,
     string Unit,
     DateTime Timestamp);
+
+/// <summary>
+/// Published by Production.Service when a baking job cannot start because at least one
+/// ingredient is below the recipe requirement. The job is held in "AwaitingIngredients"
+/// status and re-checked on each tick of the BakingProgressWorker; agents listening for
+/// this event can react by triggering a supplier restock.
+/// </summary>
+public record IngredientShortageEvent(
+    Guid JobId,
+    Guid ProductId,
+    decimal Quantity,
+    string IngredientName,
+    decimal QuantityNeeded,
+    decimal QuantityAvailable,
+    string Unit,
+    DateTime DetectedAt);
+
+/// <summary>
+/// Canonical baking-job status strings stored on <c>BakingJob.Status</c>.
+/// Centralised here so producers and agents agree on the exact spelling.
+/// </summary>
+public static class BakingJobStatus
+{
+    public const string Scheduled = "Scheduled";
+    public const string AwaitingIngredients = "AwaitingIngredients";
+    public const string Baking = "Baking";
+    public const string Completed = "Completed";
+}

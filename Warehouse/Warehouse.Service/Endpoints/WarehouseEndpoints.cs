@@ -60,6 +60,13 @@ public static class WarehouseEndpoints
         })
         .WithName("CheckRecipe");
 
+        group.MapPost("/consume-recipe", async (ConsumeRecipeRequest request, IWarehouseService svc, CancellationToken ct) =>
+        {
+            var result = await svc.ConsumeRecipeAsync(request, ct);
+            return Results.Ok(result);
+        })
+        .WithName("ConsumeRecipe");
+
         return app;
     }
 }

@@ -130,4 +130,54 @@ public class WarehouseService(
 
         return new RecipeCheckResponse(true);
     }
+
+    public async Task<ConsumeRecipeResponse> ConsumeRecipeAsync(ConsumeRecipeRequest request, CancellationToken ct = default)
+    {
+        var recipe = await recipeRepository.GetByProductIdAsync(request.ProductId, ct);
+        if (recipe == null)
+        {
+            return new ConsumeRecipeResponse(true, Message: "No recipe defined for this product, nothing to consume.");
+        }
+
+        var items = await repository.GetAllAsync(ct);
+
+        // Two-pass: first verify everything is available, then deduct atomically.
+        // Avoids partial deductions when a later ingredient is short.
+        foreach (var ingredient in recipe.Ingredients)
+        {
+            var needed = ingredient.QuantityRequired * request.Quantity;
+            var item = items.FirstOrDefault(i =>
+                string.Equals(i.Name, ingredient.IngredientName, StringComparison.OrdinalIgnoreCase));
+
+            var have = item?.Quantity ?? 0m;
+            if (item == null || have < needed)
+            {
+                return new ConsumeRecipeResponse(
+                    Consumed: false,
+                    ShortageIngredientName: ingredient.IngredientName,
+                    ShortageQuantityNeeded: needed,
+                    ShortageQuantityAvailable: have,
+                    ShortageUnit: ingredient.Unit,
+                    Message: $"Insufficient {ingredient.IngredientName}: need {needed}{ingredient.Unit}, have {have}{ingredient.Unit}.");
+            }
+        }
+
+        foreach (var ingredient in recipe.Ingredients)
+        {
+            var needed = ingredient.QuantityRequired * request.Quantity;
+            var item = items.First(i =>
+                string.Equals(i.Name, ingredient.IngredientName, StringComparison.OrdinalIgnoreCase));
+
+            item.Quantity -= needed;
+            repository.Update(item);
+            await eventPublisher.PublishAsync(new StockDeductedEvent(item.Id, needed, item.Quantity), ct);
+        }
+
+        await repository.SaveChangesAsync(ct);
+        logger.LogInformation(
+            "Consumed recipe for product {ProductId} x{Quantity} ({IngredientCount} ingredients deducted)",
+            request.ProductId, request.Quantity, recipe.Ingredients.Count);
+
+        return new ConsumeRecipeResponse(true);
+    }
 }

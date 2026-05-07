@@ -63,14 +63,18 @@ var orderService = builder.AddProject<Projects.Order_Service>("order-service", l
 // 3. Background Worker
 // ==========================================
 
-// Consumes "OrderPlaced" events from RabbitMQ and stores tracking schedules in Redis
+// Consumes "OrderPlaced" events from RabbitMQ and stores tracking schedules in Redis.
+// Also runs BakingProgressWorker which calls Warehouse.Service to atomically consume
+// recipe ingredients when a job starts — hence the warehouse reference below.
 var productionWorker = builder.AddProject<Projects.Production_Service>("production-service", launchProfileName: "https")
     .WithReference(rabbitmq)
     .WaitFor(rabbitmq)
     .WithReference(redis)
     .WaitFor(redis)
     .WithReference(productionDb)
-    .WaitFor(productionDb);
+    .WaitFor(productionDb)
+    .WithReference(warehouseService)
+    .WaitFor(warehouseService);
 
 // ==========================================
 // 4. Frontend (Blazor Web)

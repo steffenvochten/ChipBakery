@@ -4,6 +4,7 @@ using Production.Service.Endpoints;
 using Production.Service.Extensions;
 using Production.Service.Middleware;
 using Production.Service.Messaging;
+using Production.Service.Workers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,11 @@ builder.Services.AddApplication();
 
 // Register Messaging Consumers
 builder.Services.AddHostedService<OrderPlacedConsumer>();
+
+// Drives the baking-job lifecycle: Scheduled → Baking (after consuming ingredients)
+// → Completed; jobs that find the warehouse short are held in AwaitingIngredients
+// and retried on each tick once supplier deliveries have restocked.
+builder.Services.AddHostedService<BakingProgressWorker>();
 
 // Add cross-cutting concerns.
 builder.Services.AddProblemDetails();
