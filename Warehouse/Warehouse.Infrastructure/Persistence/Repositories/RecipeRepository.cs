@@ -21,6 +21,15 @@ public class RecipeRepository(WarehouseDbContext context) : IRecipeRepository
             .AsNoTracking()
             .ToListAsync(ct);
 
+    public async Task DeleteByProductIdAsync(Guid productId, CancellationToken ct = default)
+    {
+        var recipe = await context.Recipes
+            .Include(r => r.Ingredients)
+            .FirstOrDefaultAsync(r => r.ProductId == productId, ct);
+        if (recipe != null)
+            context.Recipes.Remove(recipe);
+    }
+
     public async Task SaveChangesAsync(CancellationToken ct = default) =>
         await context.SaveChangesAsync(ct);
 }

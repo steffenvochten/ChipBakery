@@ -48,6 +48,11 @@ public record UpdateInventoryRequest(string Name, decimal Price, int Quantity);
 
 public record WarehouseItem(Guid Id, string Name, decimal Quantity, string Unit);
 
+public record RecipeIngredientDto(Guid Id, string IngredientName, decimal QuantityRequired, string Unit);
+public record RecipeDto(Guid Id, Guid ProductId, string ProductName, List<RecipeIngredientDto> Ingredients);
+public record CreateRecipeIngredientRequest(string IngredientName, decimal QuantityRequired, string Unit);
+public record CreateRecipeRequest(Guid ProductId, string ProductName, List<CreateRecipeIngredientRequest> Ingredients);
+
 public record RecipeCheckRequest(Guid ProductId, int Quantity);
 
 public record RecipeCheckResponse(bool Available, string? Message = null);

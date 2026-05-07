@@ -3,20 +3,23 @@ using Agents.Service.Brain;
 using Agents.Service.Hubs;
 using ChipBakery.Shared;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Options;
 
 namespace Agents.Service.Workers;
 
 /// <summary>
-/// Runs three autonomous supplier agents concurrently.
-/// Each supplier specialises in a set of ingredient keywords and polls the
-/// warehouse every N seconds. When any specialty ingredient is critically low
-/// the LLM decides how much to dispatch; the agent then calls POST /api/supplier/restock.
+/// Runs one autonomous supplier agent per entry in Suppliers config (appsettings.json).
+/// Each supplier specialises in a set of ingredient keywords and polls the warehouse every
+/// N seconds. When any specialty ingredient is critically low the LLM decides how much to
+/// dispatch; the agent then calls POST /api/supplier/restock.
 /// Falls back to rule-based defaults when Ollama is unavailable.
+/// Add or modify suppliers by editing appsettings.json — no code change required.
 /// </summary>
 public class SupplierAgentWorker(
     IServiceProvider services,
     IAgentBrain brain,
     AgentSettings settings,
+    IOptionsMonitor<SupplierAgentOptions> optionsMonitor,
     IHubContext<AgentActivityHub> hub,
     ILogger<SupplierAgentWorker> logger) : BackgroundService
 {
@@ -28,46 +31,22 @@ public class SupplierAgentWorker(
         decimal DefaultRestockQty,
         TimeSpan Interval);
 
-    private static readonly SupplierPersona[] Personas =
-    [
-        new(
-            Name: "Acme Flour Co.",
-            SystemPrompt:
-                "You are Acme Flour Co., a reliable bulk flour supplier. " +
-                "You supply wheat flour, all-purpose flour and similar grain products. " +
-                "You take pride in keeping the bakery fully stocked and dispatch generously.",
-            Keywords: ["flour"],
-            LowThreshold: 15m,
-            DefaultRestockQty: 50m,
-            Interval: TimeSpan.FromSeconds(38)),
-
-        new(
-            Name: "Sweet Sugar Inc.",
-            SystemPrompt:
-                "You are Sweet Sugar Inc., a premium sweetener supplier. " +
-                "You supply granulated sugar, brown sugar, honey and similar products. " +
-                "You're enthusiastic about your products and always send a little extra.",
-            Keywords: ["sugar", "honey", "syrup"],
-            LowThreshold: 10m,
-            DefaultRestockQty: 40m,
-            Interval: TimeSpan.FromSeconds(44)),
-
-        new(
-            Name: "Dairy Direct",
-            SystemPrompt:
-                "You are Dairy Direct, a local dairy supplier known for freshness. " +
-                "You supply butter, cream, milk and other dairy products. " +
-                "You dispatch quickly and in practical quantities to avoid spoilage.",
-            Keywords: ["butter", "cream", "milk", "dairy"],
-            LowThreshold: 5m,
-            DefaultRestockQty: 20m,
-            Interval: TimeSpan.FromSeconds(32)),
-    ];
+    private SupplierPersona[] LoadPersonas() =>
+        optionsMonitor.CurrentValue.Suppliers
+            .Select(c => new SupplierPersona(
+                c.Name,
+                c.SystemPrompt,
+                c.Keywords,
+                c.LowThreshold,
+                c.DefaultRestockQty,
+                TimeSpan.FromSeconds(c.IntervalSeconds)))
+            .ToArray();
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("SupplierAgentWorker started ({Count} agents)", Personas.Length);
-        var tasks = Personas.Select((p, i) => RunLoopAsync(p, startDelay: i * 7 + 12, stoppingToken));
+        var personas = LoadPersonas();
+        logger.LogInformation("SupplierAgentWorker started ({Count} agents)", personas.Length);
+        var tasks = personas.Select((p, i) => RunLoopAsync(p, startDelay: i * 7 + 12, stoppingToken));
         await Task.WhenAll(tasks);
     }
 

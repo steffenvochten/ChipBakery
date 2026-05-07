@@ -20,6 +20,9 @@ builder.Services.AddHttpClient("Production", c => c.BaseAddress = new Uri("https
 // ── Agent settings (speed multiplier + pause flag, mutated via SignalR hub) ───
 builder.Services.AddSingleton<AgentSettings>();
 
+// ── Supplier agent configuration (keywords, thresholds — edit appsettings.json) ─
+builder.Services.Configure<SupplierAgentOptions>(builder.Configuration);
+
 // ── Agent brain (LLM via Ollama, degrades gracefully to rule-based fallback) ─
 builder.Services.AddSingleton<IAgentBrain, OllamaAgentBrain>();
 

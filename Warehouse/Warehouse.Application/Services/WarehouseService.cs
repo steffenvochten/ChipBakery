@@ -180,4 +180,48 @@ public class WarehouseService(
 
         return new ConsumeRecipeResponse(true);
     }
+
+    public async Task<List<RecipeDto>> GetAllRecipesAsync(CancellationToken ct = default)
+    {
+        var recipes = await recipeRepository.GetAllAsync(ct);
+        return recipes.ToDtoList();
+    }
+
+    public async Task<RecipeDto> UpsertRecipeAsync(CreateRecipeRequest request, CancellationToken ct = default)
+    {
+        // Delete existing recipe for this product if it exists (full replace).
+        await recipeRepository.DeleteByProductIdAsync(request.ProductId, ct);
+        await recipeRepository.SaveChangesAsync(ct);
+
+        var recipeId = Guid.NewGuid();
+        var recipe = new Recipe
+        {
+            Id          = recipeId,
+            ProductId   = request.ProductId,
+            ProductName = request.ProductName,
+            Ingredients = request.Ingredients.Select(i => new RecipeIngredient
+            {
+                Id               = Guid.NewGuid(),
+                RecipeId         = recipeId,
+                IngredientName   = i.IngredientName,
+                QuantityRequired = i.QuantityRequired,
+                Unit             = i.Unit
+            }).ToList()
+        };
+
+        await recipeRepository.AddAsync(recipe, ct);
+        await recipeRepository.SaveChangesAsync(ct);
+
+        logger.LogInformation("Upserted recipe for product {ProductId} ({ProductName}, {Count} ingredients)",
+            request.ProductId, request.ProductName, recipe.Ingredients.Count);
+
+        return recipe.ToDto();
+    }
+
+    public async Task DeleteRecipeAsync(Guid productId, CancellationToken ct = default)
+    {
+        await recipeRepository.DeleteByProductIdAsync(productId, ct);
+        await recipeRepository.SaveChangesAsync(ct);
+        logger.LogInformation("Deleted recipe for product {ProductId}", productId);
+    }
 }

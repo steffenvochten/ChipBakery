@@ -106,6 +106,27 @@ public class BakeryApiClient(IHttpClientFactory httpClientFactory)
         return response.IsSuccessStatusCode;
     }
 
+    public async Task<List<RecipeDto>> GetAllRecipesAsync()
+    {
+        var client = httpClientFactory.CreateClient("Warehouse");
+        return await client.GetFromJsonAsync<List<RecipeDto>>("/api/warehouse/recipes") ?? new();
+    }
+
+    public async Task<RecipeDto?> UpsertRecipeAsync(CreateRecipeRequest request)
+    {
+        var client = httpClientFactory.CreateClient("Warehouse");
+        var response = await client.PostAsJsonAsync("/api/warehouse/recipes", request);
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<RecipeDto>();
+    }
+
+    public async Task<bool> DeleteRecipeAsync(Guid productId)
+    {
+        var client = httpClientFactory.CreateClient("Warehouse");
+        var response = await client.DeleteAsync($"/api/warehouse/recipes/{productId}");
+        return response.IsSuccessStatusCode;
+    }
+
     // ─── Production ─────────────────────────────────────────────────────────
 
     public async Task<List<BakingJob>> GetAllBakingJobsAsync()

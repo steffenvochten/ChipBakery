@@ -67,6 +67,27 @@ public static class WarehouseEndpoints
         })
         .WithName("ConsumeRecipe");
 
+        group.MapGet("/recipes", async (IWarehouseService svc, CancellationToken ct) =>
+        {
+            var recipes = await svc.GetAllRecipesAsync(ct);
+            return Results.Ok(recipes);
+        })
+        .WithName("GetAllRecipes");
+
+        group.MapPost("/recipes", async (CreateRecipeRequest request, IWarehouseService svc, CancellationToken ct) =>
+        {
+            var recipe = await svc.UpsertRecipeAsync(request, ct);
+            return Results.Ok(recipe);
+        })
+        .WithName("UpsertRecipe");
+
+        group.MapDelete("/recipes/{productId:guid}", async (Guid productId, IWarehouseService svc, CancellationToken ct) =>
+        {
+            await svc.DeleteRecipeAsync(productId, ct);
+            return Results.NoContent();
+        })
+        .WithName("DeleteRecipe");
+
         return app;
     }
 }

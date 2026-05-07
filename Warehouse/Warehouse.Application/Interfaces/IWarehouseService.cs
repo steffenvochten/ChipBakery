@@ -13,4 +13,7 @@ public interface IWarehouseService
     Task DeductStockAsync(DeductStockRequest request, CancellationToken ct = default);
     Task<RecipeCheckResponse> CheckRecipeAsync(RecipeCheckRequest request, CancellationToken ct = default);
     Task<ConsumeRecipeResponse> ConsumeRecipeAsync(ConsumeRecipeRequest request, CancellationToken ct = default);
+    Task<List<RecipeDto>> GetAllRecipesAsync(CancellationToken ct = default);
+    Task<RecipeDto> UpsertRecipeAsync(CreateRecipeRequest request, CancellationToken ct = default);
+    Task DeleteRecipeAsync(Guid productId, CancellationToken ct = default);
 }

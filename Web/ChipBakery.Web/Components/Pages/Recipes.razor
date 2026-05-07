@@ -1,0 +1,279 @@
+@page "/recipes"
+@rendermode InteractiveServer
+@using ChipBakery.Shared
+@using ChipBakery.Web.Services
+@inject BakeryApiClient ApiClient
+@implements IDisposable
+
+<PageTitle>Recipes - Chip Bakery</PageTitle>
+
+<div class="space-y-8 animate-in fade-in duration-700">
+    <div>
+        <h1 class="text-4xl sm:text-5xl font-black tracking-tight text-bakery-crust dark:text-amber-400">Recipes</h1>
+        <p class="text-lg text-bakery-crust/60 dark:text-stone-400 font-medium">Define which warehouse ingredients each product consumes when baked.</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <div class="rounded-3xl @(_isError ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300/50" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300/50") border p-4 font-bold flex items-center justify-between gap-4">
+            <span>@_message</span>
+            <button class="btn btn-outline py-2 text-xs" @onclick="() => _message = null">Dismiss</button>
+        </div>
+    }
+
+    @if (_isLoading)
+    {
+        <div class="space-y-4">
+            @for (int i = 0; i < 3; i++)
+            {
+                <div class="glass-card p-6 h-32 animate-pulse"></div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="space-y-4">
+            @foreach (var product in _products)
+            {
+                var recipe = _recipes.FirstOrDefault(r => r.ProductId == product.Id);
+                <div class="glass-card p-6">
+                    <div class="flex flex-col sm:flex-row sm:items-start gap-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-3">
+                                <h3 class="text-xl font-black text-bakery-crust dark:text-stone-100">@product.Name</h3>
+                                @if (recipe != null)
+                                {
+                                    <span class="px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-black uppercase tracking-widest">Recipe set</span>
+                                }
+                                else
+                                {
+                                    <span class="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-black uppercase tracking-widest">No recipe</span>
+                                }
+                            </div>
+
+                            @if (recipe != null && recipe.Ingredients.Any())
+                            {
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach (var ing in recipe.Ingredients)
+                                    {
+                                        <span class="px-3 py-1 rounded-full border border-bakery-crust/10 dark:border-stone-700 text-sm font-medium text-bakery-crust/70 dark:text-stone-400">
+                                            @ing.QuantityRequired.ToString("G", System.Globalization.CultureInfo.InvariantCulture) @ing.Unit @ing.IngredientName
+                                        </span>
+                                    }
+                                </div>
+                            }
+                            else if (recipe == null)
+                            {
+                                <p class="text-sm text-bakery-crust/40 dark:text-stone-500">Baking will succeed without consuming any ingredients until a recipe is defined.</p>
+                            }
+                        </div>
+
+                        <div class="flex gap-2 shrink-0">
+                            <button class="btn btn-outline py-2 px-4 text-sm" @onclick="() => OpenModal(product, recipe)">
+                                @(recipe != null ? "Edit" : "Add Recipe")
+                            </button>
+                            @if (recipe != null)
+                            {
+                                <button class="w-9 h-9 flex items-center justify-center rounded-xl bg-red-100 text-red-700 hover:bg-red-500 hover:text-white transition-all" title="Delete recipe" @onclick="() => DeleteRecipe(product.Id)">×</button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@if (_modalProduct != null)
+{
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 backdrop-blur-md bg-stone-950/40 animate-in fade-in duration-300">
+        <div class="glass-card w-full max-w-lg p-8 shadow-2xl bg-white/90 dark:bg-stone-900/90 max-h-[90vh] overflow-y-auto">
+            <h2 class="text-2xl font-black text-bakery-crust dark:text-amber-400 mb-1">@_modalProduct.Name</h2>
+            <p class="text-sm text-bakery-crust/50 dark:text-stone-400 mb-6">Define the ingredients consumed per unit baked.</p>
+
+            @if (!string.IsNullOrEmpty(_modalError))
+            {
+                <div class="mb-4 px-4 py-3 rounded-2xl bg-red-100 text-red-700 text-sm font-bold">@_modalError</div>
+            }
+
+            <div class="space-y-3 mb-6">
+                @for (int i = 0; i < _editIngredients.Count; i++)
+                {
+                    var idx = i;
+                    var ing = _editIngredients[idx];
+                    <div class="flex gap-2 items-end">
+                        <div class="flex-1">
+                            @if (idx == 0) { <label class="form-label text-xs">Ingredient</label> }
+                            <input class="form-control" placeholder="e.g. Bread Flour" value="@ing.IngredientName"
+                                   @oninput="e => ing.IngredientName = e.Value?.ToString() ?? string.Empty" />
+                        </div>
+                        <div class="w-24">
+                            @if (idx == 0) { <label class="form-label text-xs">Qty</label> }
+                            <input class="form-control" type="number" step="0.001" min="0.001"
+                                   @bind:get="ing.QuantityRequired"
+                                   @bind:set="v => ing.QuantityRequired = v"
+                                   @bind:event="oninput"
+                                   @bind:culture="@System.Globalization.CultureInfo.InvariantCulture" />
+                        </div>
+                        <div class="w-20">
+                            @if (idx == 0) { <label class="form-label text-xs">Unit</label> }
+                            <input class="form-control" placeholder="kg" value="@ing.Unit"
+                                   @oninput="e => ing.Unit = e.Value?.ToString() ?? string.Empty" />
+                        </div>
+                        <button class="mb-0.5 w-9 h-9 flex items-center justify-center rounded-xl bg-red-100 text-red-700 hover:bg-red-500 hover:text-white transition-all shrink-0"
+                                @onclick="() => RemoveIngredient(idx)">×</button>
+                    </div>
+                }
+            </div>
+
+            <button class="btn btn-outline w-full py-2 text-sm mb-6" @onclick="AddIngredientRow">+ Add Ingredient</button>
+
+            <div class="flex gap-3">
+                <button class="btn btn-outline flex-1" @onclick="CloseModal" disabled="@_isSaving">Cancel</button>
+                <button class="btn btn-primary flex-1" @onclick="SaveRecipe" disabled="@_isSaving">
+                    @(_isSaving ? "Saving..." : "Save Recipe")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<InventoryItem> _products = new();
+    private List<RecipeDto> _recipes = new();
+    private bool _isLoading = true;
+    private string? _message;
+    private bool _isError;
+    private System.Threading.Timer? _timer;
+
+    // Modal state
+    private InventoryItem? _modalProduct;
+    private List<EditIngredient> _editIngredients = new();
+    private string? _modalError;
+    private bool _isSaving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        _timer = new System.Threading.Timer(async _ => await InvokeAsync(async () =>
+        {
+            await LoadData();
+            StateHasChanged();
+        }), null, 5000, 5000);
+    }
+
+    public void Dispose() => _timer?.Dispose();
+
+    private async Task LoadData()
+    {
+        try
+        {
+            var p = ApiClient.GetAllInventoryAsync();
+            var r = ApiClient.GetAllRecipesAsync();
+            await Task.WhenAll(p, r);
+            _products = await p;
+            _recipes  = await r;
+        }
+        catch (Exception ex)
+        {
+            ShowMessage($"Failed to load: {ex.Message}", true);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void OpenModal(InventoryItem product, RecipeDto? existing)
+    {
+        _modalProduct    = product;
+        _modalError      = null;
+        _editIngredients = existing?.Ingredients
+            .Select(i => new EditIngredient { IngredientName = i.IngredientName, QuantityRequired = i.QuantityRequired, Unit = i.Unit })
+            .ToList() ?? new();
+        if (_editIngredients.Count == 0)
+            _editIngredients.Add(new());
+    }
+
+    private void CloseModal()
+    {
+        _modalProduct = null;
+        _isSaving     = false;
+    }
+
+    private void AddIngredientRow() => _editIngredients.Add(new());
+
+    private void RemoveIngredient(int idx)
+    {
+        if (_editIngredients.Count > 1)
+            _editIngredients.RemoveAt(idx);
+    }
+
+    private async Task SaveRecipe()
+    {
+        if (_isSaving || _modalProduct is null) return;
+
+        var valid = _editIngredients.Where(i => !string.IsNullOrWhiteSpace(i.IngredientName) && i.QuantityRequired > 0 && !string.IsNullOrWhiteSpace(i.Unit)).ToList();
+        if (valid.Count == 0)
+        {
+            _modalError = "Add at least one ingredient with a name, quantity, and unit.";
+            return;
+        }
+
+        _isSaving    = true;
+        _modalError  = null;
+        try
+        {
+            var req = new CreateRecipeRequest(
+                _modalProduct.Id,
+                _modalProduct.Name,
+                valid.Select(i => new CreateRecipeIngredientRequest(i.IngredientName, i.QuantityRequired, i.Unit)).ToList());
+
+            var result = await ApiClient.UpsertRecipeAsync(req);
+            if (result == null)
+            {
+                _modalError = "Failed to save recipe.";
+                return;
+            }
+
+            await LoadData();
+            CloseModal();
+            ShowMessage($"Recipe saved for {req.ProductName}.", false);
+        }
+        catch (Exception ex)
+        {
+            _modalError = $"Save failed: {ex.Message}";
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private async Task DeleteRecipe(Guid productId)
+    {
+        try
+        {
+            await ApiClient.DeleteRecipeAsync(productId);
+            await LoadData();
+            ShowMessage("Recipe deleted.", false);
+        }
+        catch (Exception ex)
+        {
+            ShowMessage($"Delete failed: {ex.Message}", true);
+        }
+    }
+
+    private void ShowMessage(string msg, bool isError)
+    {
+        _message = msg;
+        _isError = isError;
+    }
+
+    private class EditIngredient
+    {
+        public string  IngredientName   { get; set; } = string.Empty;
+        public decimal QuantityRequired { get; set; }
+        public string  Unit             { get; set; } = string.Empty;
+    }
+}
