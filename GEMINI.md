@@ -55,6 +55,7 @@ When adding a new service:
 * **Order.Service**: Handles transactions. It must synchronously check if there are enough items/ingredients available before accepting an order. ✅ Refactored to Clean Architecture.
 * **Production.Service**: Background worker consuming `OrderPlaced` events to handle baking schedules and updates tracking in Redis. ✅ Refactored to Clean Architecture.
 * **Loyalty.Service**: Handles loyalty/rewards logic. ✅ Refactored to Clean Architecture.
+* **Agents.Service**: Autonomous agent simulation (Clients, Suppliers, Bakers). Uses **Ollama** for LLM-based reasoning and **SignalR** to stream activity to the frontend. ⚠️ **Note**: This service is a single project and does not follow the 4-layer Clean Architecture pattern.
 
 ## Service Architecture Pattern
 All services should be built using Clean Architecture with 4 separate projects per service:
@@ -62,6 +63,8 @@ All services should be built using Clean Architecture with 4 separate projects p
 - `[Service].Application` — Use cases/service layer, FluentValidation validators, DTOs, mapping. Depends only on Domain.
 - `[Service].Infrastructure` — EF Core DbContext, repositories, event publisher. Depends on Application + Domain.
 - `[Service].API` (named `[Service].Service` to preserve Aspire AppHost references) — Thin Minimal API endpoints, exception handler middleware, DI composition root.
+
+**Exception**: `Agents.Service` is exempt from this 4-layer requirement as it functions primarily as a background worker and LLM client without persistent domain entities.
 
 See: `CLEAN_ARCHITECTURE.md` in this repository for the full implementation pattern and template.
 
@@ -73,6 +76,10 @@ See: `CLEAN_ARCHITECTURE.md` in this repository for the full implementation patt
 * Currently mocked by `MockEventPublisher` (logs as structured JSON — visible in Aspire dashboard).
 * **To wire to RabbitMQ**: See the replacement guide comments in `Inventory.Infrastructure/Events/MockEventPublisher.cs`.
 * AppHost already provisions RabbitMQ (`rabbitmq`) — services just need `.WithReference(rabbitmq)` added.
+
+## Orchestration & Containers
+* **.NET Aspire**: Manages service discovery and life cycle.
+* **Ollama**: Hosted as a sidecar container in AppHost to provide local LLM capabilities (Llama 3.2) for the `Agents.Service`.
 
 ## Shared Contracts (ChipBakery.Shared)
 * `ProductItem(Guid Id, string Name, decimal Price, int AvailableQuantity)` — returned by Inventory `/available` endpoint.

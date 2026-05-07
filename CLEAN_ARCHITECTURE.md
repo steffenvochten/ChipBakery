@@ -1,7 +1,9 @@
 # ChipBakery — Clean Architecture Implementation Pattern
 
 > **Reference implementations**: `Inventory.Service` (fully built) and `Order.Service` (fully built).
-> All other services should follow this pattern exactly.
+> All other core domain services should follow this pattern exactly.
+>
+> **Exception**: `Agents.Service` intentionally bypasses this 4-project structure as it functions primarily as an autonomous worker/integration layer and LLM client without its own domain persistence.
 
 > **`IEventPublisher` lives in `ChipBakery.Shared`** — NOT in each service's Domain project.
 > This was decided to avoid interface duplication across services (KI updated 2026-05-05).

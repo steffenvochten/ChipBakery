@@ -15,11 +15,13 @@ All backend services strictly follow the Clean Architecture pattern, divided int
 - **Supplier.Service:** Manages external vendors and ingredient procurement.
 - **Loyalty.Service:** Tracks customer rewards and bakery points.
 - **Production.Service:** A background worker that consumes order events and schedules production.
+- **Agents.Service:** Hosts autonomous agent loops (Client, Supplier, Baker, etc.) and a SignalR hub for real-time activity streaming.
 
 ### Infrastructure (Managed by Aspire)
 - **PostgreSQL:** Distributed databases for each microservice.
 - **Redis:** Used for live tracking and high-speed caching.
 - **RabbitMQ:** The message broker facilitating asynchronous communication (e.g., "OrderPlaced" events).
+- **Ollama:** Local LLM server used by agents for autonomous decision-making.
 - **pgAdmin / Redis Commander:** UI tools for monitoring data during development.
 
 ## 🚀 Getting Started
@@ -28,6 +30,7 @@ All backend services strictly follow the Clean Architecture pattern, divided int
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for containers)
 - [.NET Aspire Workload](https://learn.microsoft.com/en-us/dotnet/aspire/fundamentals/setup)
+- [Ollama](https://ollama.com/) (Optional, if running agents with LLM brain locally)
 
 ### Running the Application
 1. Clone the repository.
@@ -45,6 +48,7 @@ Once started, the **Aspire Dashboard** will open automatically, providing links 
 - **Data:** Entity Framework Core / PostgreSQL
 - **Messaging:** RabbitMQ
 - **Caching:** Redis
+- **AI/LLM:** Ollama (Local Llama 3.2)
 - **Patterns:** Domain-Driven Design (DDD), Event-Driven Architecture, Clean Architecture
 
 ---
