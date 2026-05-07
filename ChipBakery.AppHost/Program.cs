@@ -100,6 +100,8 @@ var agentsService = builder.AddProject<Projects.Agents_Service>("agents-service"
     .WaitFor(orderService)
     .WithReference(supplierService)
     .WaitFor(supplierService)
+    .WithReference(productionWorker)
+    .WaitFor(productionWorker)
     .WithEnvironment("OLLAMA_BASE_URL", ollama.GetEndpoint("http"));
 
 // ==========================================

@@ -10,10 +10,11 @@ builder.AddServiceDefaults();
 builder.Services.AddSignalR();
 
 // ── HTTP clients for service calls (Aspire service discovery resolves URIs) ─
-builder.Services.AddHttpClient("Inventory", c => c.BaseAddress = new Uri("https://inventory-service"));
-builder.Services.AddHttpClient("Order",     c => c.BaseAddress = new Uri("https://order-service"));
-builder.Services.AddHttpClient("Warehouse", c => c.BaseAddress = new Uri("https://warehouse-service"));
-builder.Services.AddHttpClient("Supplier",  c => c.BaseAddress = new Uri("https://supplier-service"));
+builder.Services.AddHttpClient("Inventory",  c => c.BaseAddress = new Uri("https://inventory-service"));
+builder.Services.AddHttpClient("Order",      c => c.BaseAddress = new Uri("https://order-service"));
+builder.Services.AddHttpClient("Warehouse",  c => c.BaseAddress = new Uri("https://warehouse-service"));
+builder.Services.AddHttpClient("Supplier",   c => c.BaseAddress = new Uri("https://supplier-service"));
+builder.Services.AddHttpClient("Production", c => c.BaseAddress = new Uri("https://production-service"));
 
 // ── Agent brain (LLM via Ollama, degrades gracefully to rule-based fallback) ─
 builder.Services.AddSingleton<IAgentBrain, OllamaAgentBrain>();
@@ -22,6 +23,8 @@ builder.Services.AddSingleton<IAgentBrain, OllamaAgentBrain>();
 builder.Services.AddHostedService<HeartbeatAgent>();
 builder.Services.AddHostedService<ClientAgentWorker>();
 builder.Services.AddHostedService<SupplierAgentWorker>();
+builder.Services.AddHostedService<WarehouseManagerAgent>();
+builder.Services.AddHostedService<BakerAgent>();
 
 var app = builder.Build();
 
