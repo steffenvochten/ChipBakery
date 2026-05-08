@@ -9,6 +9,7 @@
     <ProjectReference Include="..\Loyalty\Loyalty.Service\Loyalty.Service.csproj" />
     <ProjectReference Include="..\Production\Production.Service\Production.Service.csproj" />
     <ProjectReference Include="..\Agents\Agents.Service\Agents.Service.csproj" />
+    <ProjectReference Include="..\Catalog\Catalog.Service\Catalog.Service.csproj" />
   </ItemGroup>
 
   <ItemGroup>

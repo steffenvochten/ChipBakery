@@ -6,8 +6,10 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 // PostgreSQL Server with separate databases for each service
 var postgres = builder.AddPostgres("postgres")
+                      .WithContainerName("chipbakery-postgres")
+                      .WithLifetime(ContainerLifetime.Persistent)
                       .WithDataVolume()
-                      .WithPgAdmin(); // Optional: Includes pgAdmin for easy management
+                      .WithPgAdmin(c => c.WithContainerName("chipbakery-pgadmin"));
 
 var orderDb = postgres.AddDatabase("orderdb");
 var warehouseDb = postgres.AddDatabase("warehousedb");
@@ -17,18 +19,22 @@ var loyaltyDb = postgres.AddDatabase("loyaltydb");
 var productionDb = postgres.AddDatabase("productiondb");
 
 // Ollama — local LLM server for AI agent decisions
-// Model is pulled automatically on first use; pull it once with:
-//   docker exec chipbakery-ollama ollama pull llama3.2:3b
 var ollama = builder.AddContainer("ollama", "ollama/ollama")
+                    .WithContainerName("chipbakery-ollama")
+                    .WithLifetime(ContainerLifetime.Persistent)
                     .WithVolume("chipbakery-ollama-models", "/root/.ollama")
                     .WithHttpEndpoint(port: 11434, targetPort: 11434, name: "http");
 
 // Live tracking cache and event messaging
 var redis = builder.AddRedis("redis")
-                   .WithRedisCommander(); // Optional: UI for viewing Redis data
+                   .WithContainerName("chipbakery-redis")
+                   .WithLifetime(ContainerLifetime.Persistent)
+                   .WithRedisCommander(c => c.WithContainerName("chipbakery-redis-commander"));
 
 var rabbitmq = builder.AddRabbitMQ("rabbitmq")
-                      .WithManagementPlugin(); // Optional: UI for monitoring RabbitMQ queues
+                      .WithContainerName("chipbakery-rabbitmq")
+                      .WithLifetime(ContainerLifetime.Persistent)
+                      .WithManagementPlugin();
 
 // ==========================================
 // 2. Core Services (Web APIs)
@@ -104,6 +110,11 @@ var agentsService = builder.AddProject<Projects.Agents_Service>("agents-service"
     .WaitFor(productionWorker)
     .WithEnvironment("OLLAMA_BASE_URL", ollama.GetEndpoint("http"));
 
+var catalogService = builder.AddProject<Projects.Catalog_Service>("catalog-service", launchProfileName: "https")
+    .WithReference(inventoryService)
+    .WithReference(warehouseService)
+    .WithReference(agentsService);
+
 // ==========================================
 // 5. Frontend (Blazor Web)
 // ==========================================
@@ -123,6 +134,7 @@ var webFrontend = builder.AddProject<Projects.ChipBakery_Web>("web", launchProfi
     .WaitFor(productionWorker)
     .WithReference(agentsService)
     .WaitFor(agentsService)
+    .WithReference(catalogService)
     .WithExternalHttpEndpoints(); // Exposes the frontend to your local browser
 
 builder.Build().Run();
