@@ -5,155 +5,134 @@
 @inject BakeryApiClient ApiClient
 @implements IDisposable
 
-<PageTitle>Inventory Management | Chip Bakery</PageTitle>
+<PageTitle>Inventory · ChipBakery</PageTitle>
 
-<div class="space-y-8">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-            <h1 class="text-4xl font-serif font-black text-bakery-crust dark:text-amber-500">Inventory</h1>
-            <p class="text-stone-500 font-medium">Manage your artisanal product catalog.</p>
-        </div>
-        <button class="btn btn-primary shadow-lg shadow-bakery-crust/20" @onclick="OpenCreateModal">
-            <span class="text-lg mr-2">+</span> Add Product
-        </button>
+<div class="space-y-10 animate-fade-up">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+        <SectionHeader Eyebrow="storeroom"
+                       Subtitle="What's on the counter today. Edit prices, restock by hand, or pull a product from the menu.">
+            Inventory
+        </SectionHeader>
+        <PaperButton Variant="ButtonVariant.Chocolate"
+                     Glyph="glyph-plus"
+                     OnClick="OpenCreateModal">
+            Add product
+        </PaperButton>
     </div>
 
-    @if (_isLoading)
-    {
-        <div class="space-y-4">
-            @for(int i=0; i<5; i++) {
-                <div class="glass-card h-20 animate-pulse"></div>
-            }
-        </div>
-    }
-    else if (_inventory == null || !_inventory.Any())
-    {
-        <div class="glass-card p-16 text-center">
-            <div class="text-6xl mb-6">📦</div>
-            <h3 class="text-2xl font-serif font-black mb-2">No inventory items</h3>
-            <p class="text-stone-500">Add some products to your catalogue to get started.</p>
-        </div>
-    }
-    else
-    {
-        <div class="glass-card overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-bakery-crust/5 border-b border-bakery-crust/10">
-                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60">Product Name</th>
-                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60">Price</th>
-                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60">Stock Status</th>
-                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-bakery-crust/5">
-                        @foreach (var item in _inventory)
-                        {
-                            <tr class="hover:bg-bakery-crust/5 transition-colors group">
-                                <td class="px-6 py-4">
-                                    <div class="font-bold text-stone-900 dark:text-stone-100">@item.Name</div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="text-sm font-medium opacity-80">$@item.Price.ToString("0.00")</div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    @if (item.Quantity <= 5)
-                                    {
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-[0.7rem] font-black uppercase tracking-widest">
-                                            Low: @item.Quantity left
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[0.7rem] font-black uppercase tracking-widest">
-                                            @item.Quantity in stock
-                                        </span>
-                                    }
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <div class="flex justify-end gap-2">
-                                        <button class="w-8 h-8 flex items-center justify-center rounded-xl bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="Edit" @onclick="() => OpenEditModal(item)">
-                                            ✎
-                                        </button>
-                                        <button class="w-8 h-8 flex items-center justify-center rounded-xl bg-red-100 text-red-700 hover:bg-red-500 hover:text-white transition-all shadow-sm" title="Delete" @onclick="() => DeleteItem(item.Id)">
-                                            ×
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    }
-</div>
-
-@if (_isModalOpen)
-{
-    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-stone-950/40 backdrop-blur-sm" @onclick="CloseModal"></div>
-        <div class="relative glass-card w-full max-w-md p-8 shadow-2xl animate-in fade-in zoom-in duration-300">
-            <button class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-bakery-crust/5 transition-colors text-2xl" @onclick="CloseModal">×</button>
-            
-            <div class="mb-8">
-                <span class="text-xs font-black uppercase tracking-widest text-bakery-crust dark:text-amber-500 mb-2 block">Management</span>
-                <h3 class="text-3xl font-serif font-black">@(_isEditMode ? "Edit Product" : "Add Product")</h3>
-            </div>
-            
-            <EditForm Model="_model" OnValidSubmit="SaveItem" class="space-y-6">
-                <div class="form-group">
-                    <label class="form-label" for="name">Product Name</label>
-                    <InputText id="name" class="form-control" @bind-Value="_model.Name" placeholder="e.g. Butter Croissant" required />
-                </div>
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="form-group">
-                        <label class="form-label" for="price">Price ($)</label>
-                        <InputNumber id="price" class="form-control" @bind-Value="_model.Price" min="0.01" step="0.01" required />
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="quantity">Stock</label>
-                        <InputNumber id="quantity" class="form-control" @bind-Value="_model.Quantity" min="0" required />
-                    </div>
-                </div>
-                
-                <div class="flex gap-3 pt-4">
-                    <button type="button" class="btn btn-outline flex-1" @onclick="CloseModal">Cancel</button>
-                    <button type="submit" class="btn btn-accent flex-1 shadow-lg shadow-amber-500/20" disabled="@_isSaving">
-                        @(_isSaving ? "Saving..." : "Save Product")
+    <LedgerTable TItem="InventoryItem"
+                 Items="@_inventory"
+                 Loading="@_isLoading"
+                 EmptyHeadline="No products in the catalogue">
+        <Header>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th class="text-right">Actions</th>
+        </Header>
+        <Row Context="item">
+            <td>
+                <div class="font-serif font-bold text-base text-ink">@item.Name</div>
+            </td>
+            <td>
+                <span class="font-mono text-sm">€@item.Price.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)</span>
+            </td>
+            <td>
+                @if (item.Quantity == 0)
+                {
+                    <StatusBadge Status="BakeryStatus.OutOfStock" RotateKey="@item.Id" />
+                }
+                else if (item.Quantity <= 5)
+                {
+                    <Stamp Color="BakeryColor.Raspberry" Glyph="glyph-clock" RotateKey="@item.Id">
+                        Low · @item.Quantity left
+                    </Stamp>
+                }
+                else
+                {
+                    <Stamp Color="BakeryColor.Basil" Glyph="glyph-check" RotateKey="@item.Id">
+                        @item.Quantity in stock
+                    </Stamp>
+                }
+            </td>
+            <td class="text-right">
+                <div class="flex justify-end gap-1">
+                    <button type="button"
+                            class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-ink/10 transition-colors text-ink"
+                            title="Edit"
+                            @onclick="() => OpenEditModal(item)">
+                        <Doodle Name="glyph-pencil" Class="w-4 h-4" ViewBox="0 0 24 24" />
+                    </button>
+                    <button type="button"
+                            class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-raspberry/15 transition-colors text-raspberry"
+                            title="Delete"
+                            @onclick="() => AskDelete(item)">
+                        <Doodle Name="glyph-trash" Class="w-4 h-4" ViewBox="0 0 24 24" />
                     </button>
                 </div>
-            </EditForm>
-        </div>
-    </div>
-}
+            </td>
+        </Row>
+    </LedgerTable>
+</div>
 
-@if (!string.IsNullOrEmpty(_notificationMessage))
-{
-    <div class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] animate-in slide-in-from-bottom-8 duration-500">
-        <div class="px-6 py-3 rounded-2xl shadow-xl backdrop-blur-md flex items-center gap-3 @(_notificationIsError ? "bg-red-500 text-white" : "bg-bakery-crust text-bakery-dough")">
-            <span class="text-lg">@(_notificationIsError ? "⚠" : "✨")</span>
-            <span class="font-bold text-sm tracking-tight">@_notificationMessage</span>
-        </div>
-    </div>
-}
+<RecipeModal @bind-Open="_isModalOpen"
+             Title="@(_isEditMode ? "Edit product" : "Add product")"
+             Eyebrow="@(_isEditMode ? "update" : "new arrival")"
+             Size="Md">
+    <ChildContent>
+        <EditForm Model="_model" OnValidSubmit="SaveItem">
+            <div class="space-y-5">
+                <FormField Label="Product name" For="name" Required="true">
+                    <InputText id="name" class="form-control" @bind-Value="_model.Name" placeholder="e.g. Butter croissant" />
+                </FormField>
+                <div class="grid grid-cols-2 gap-4">
+                    <FormField Label="Price (€)" For="price">
+                        <InputNumber id="price" class="form-control font-mono" @bind-Value="_model.Price" min="0.01" step="0.01" />
+                    </FormField>
+                    <FormField Label="Stock" For="quantity">
+                        <InputNumber id="quantity" class="form-control font-mono" @bind-Value="_model.Quantity" min="0" />
+                    </FormField>
+                </div>
+                <button type="submit" class="hidden" id="hidden-submit">submit</button>
+            </div>
+        </EditForm>
+    </ChildContent>
+    <Footer>
+        <PaperButton Variant="ButtonVariant.Ghost" OnClick="CloseModal" Disabled="@_isSaving">Cancel</PaperButton>
+        <PaperButton Variant="ButtonVariant.Chocolate"
+                     Loading="@_isSaving"
+                     OnClick="SaveItem">
+            @(_isEditMode ? "Save changes" : "Add product")
+        </PaperButton>
+    </Footer>
+</RecipeModal>
+
+<Confirm @bind-Open="_confirmDeleteOpen"
+         Title="@($"Delete {_pendingDeleteName}?")"
+         Eyebrow="heads up"
+         ConfirmLabel="Yes, delete"
+         OnConfirm="ConfirmDelete">
+    This will remove the product from the catalogue. Existing orders are unaffected.
+</Confirm>
+
+<Toast @bind-Message="_toast" Variant="@_toastVariant" />
 
 @code {
     private List<InventoryItem>? _inventory;
     private bool _isLoading = true;
 
-    // Modal state
-    private bool _isModalOpen = false;
-    private bool _isEditMode = false;
+    private bool _isModalOpen;
+    private bool _isEditMode;
     private Guid? _editingId;
     private InventoryModel _model = new();
-    private bool _isSaving = false;
+    private bool _isSaving;
 
-    private string _notificationMessage = "";
-    private bool _notificationIsError = false;
+    private bool _confirmDeleteOpen;
+    private Guid _pendingDeleteId;
+    private string _pendingDeleteName = "";
+
+    private string? _toast;
+    private Toast.ToastVariant _toastVariant = Toast.ToastVariant.Success;
     private System.Threading.Timer? _timer;
 
     protected override async Task OnInitializedAsync()
@@ -166,6 +145,8 @@
         }), null, 2000, 2000);
     }
 
+    public void Dispose() => _timer?.Dispose();
+
     private async Task LoadInventory()
     {
         try
@@ -174,7 +155,7 @@
         }
         catch (Exception ex)
         {
-            ShowNotification($"Failed to load inventory: {ex.Message}", true);
+            ShowToast($"Failed to load inventory: {ex.Message}", Toast.ToastVariant.Error);
             _inventory = new();
         }
         finally
@@ -183,39 +164,34 @@
         }
     }
 
-    public void Dispose() => _timer?.Dispose();
-
     private void OpenCreateModal()
     {
         _isEditMode = false;
-        _editingId = null;
-        _model = new InventoryModel { Price = 1.00m, Quantity = 10 };
+        _editingId  = null;
+        _model      = new InventoryModel { Price = 1.00m, Quantity = 10 };
         _isModalOpen = true;
     }
 
     private void OpenEditModal(InventoryItem item)
     {
         _isEditMode = true;
-        _editingId = item.Id;
-        _model = new InventoryModel
-        {
-            Name = item.Name,
-            Price = item.Price,
-            Quantity = item.Quantity
-        };
+        _editingId  = item.Id;
+        _model      = new InventoryModel { Name = item.Name, Price = item.Price, Quantity = item.Quantity };
         _isModalOpen = true;
     }
 
-    private void CloseModal()
-    {
-        _isModalOpen = false;
-    }
+    private void CloseModal() => _isModalOpen = false;
 
     private async Task SaveItem()
     {
         if (_isSaving) return;
-        _isSaving = true;
+        if (string.IsNullOrWhiteSpace(_model.Name))
+        {
+            ShowToast("Product needs a name.", Toast.ToastVariant.Error);
+            return;
+        }
 
+        _isSaving = true;
         try
         {
             if (_isEditMode && _editingId.HasValue)
@@ -224,13 +200,13 @@
                 var result = await ApiClient.UpdateInventoryItemAsync(_editingId.Value, req);
                 if (result != null)
                 {
-                    ShowNotification("Product updated successfully.", false);
+                    ShowToast("Product updated.", Toast.ToastVariant.Success);
                     CloseModal();
                     await LoadInventory();
                 }
                 else
                 {
-                    ShowNotification("Failed to update product.", true);
+                    ShowToast("Failed to update product.", Toast.ToastVariant.Error);
                 }
             }
             else
@@ -239,19 +215,19 @@
                 var result = await ApiClient.CreateInventoryItemAsync(req);
                 if (result != null)
                 {
-                    ShowNotification("Product added successfully.", false);
+                    ShowToast("Product added.", Toast.ToastVariant.Success);
                     CloseModal();
                     await LoadInventory();
                 }
                 else
                 {
-                    ShowNotification("Failed to add product.", true);
+                    ShowToast("Failed to add product.", Toast.ToastVariant.Error);
                 }
             }
         }
         catch (Exception ex)
         {
-            ShowNotification($"Save failed: {ex.Message}", true);
+            ShowToast($"Save failed: {ex.Message}", Toast.ToastVariant.Error);
         }
         finally
         {
@@ -259,45 +235,45 @@
         }
     }
 
-    private async Task DeleteItem(Guid id)
+    private void AskDelete(InventoryItem item)
     {
+        _pendingDeleteId   = item.Id;
+        _pendingDeleteName = item.Name;
+        _confirmDeleteOpen = true;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        _confirmDeleteOpen = false;
         try
         {
-            var success = await ApiClient.DeleteInventoryItemAsync(id);
+            var success = await ApiClient.DeleteInventoryItemAsync(_pendingDeleteId);
             if (success)
             {
-                ShowNotification("Product deleted.", false);
+                ShowToast("Product deleted.", Toast.ToastVariant.Success);
                 await LoadInventory();
             }
             else
             {
-                ShowNotification("Failed to delete product.", true);
+                ShowToast("Failed to delete product.", Toast.ToastVariant.Error);
             }
         }
         catch (Exception ex)
         {
-            ShowNotification($"Delete failed: {ex.Message}", true);
+            ShowToast($"Delete failed: {ex.Message}", Toast.ToastVariant.Error);
         }
     }
 
-    private void ShowNotification(string message, bool isError)
+    private void ShowToast(string msg, Toast.ToastVariant variant)
     {
-        _notificationMessage = message;
-        _notificationIsError = isError;
-        StateHasChanged();
-        
-        _ = Task.Run(async () =>
-        {
-            await Task.Delay(3000);
-            _notificationMessage = "";
-            await InvokeAsync(StateHasChanged);
-        });
+        _toastVariant = variant;
+        _toast = msg;
     }
 
     private class InventoryModel
     {
-        public string Name { get; set; } = "";
-        public decimal Price { get; set; }
-        public int Quantity { get; set; }
+        public string  Name     { get; set; } = "";
+        public decimal Price    { get; set; }
+        public int     Quantity { get; set; }
     }
 }

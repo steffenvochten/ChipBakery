@@ -6,123 +6,99 @@
 @inject TimezoneService TzService
 @implements IDisposable
 
-<PageTitle>Order History | Chip Bakery</PageTitle>
+<PageTitle>Orders · ChipBakery</PageTitle>
 
-<div class="space-y-8">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-            <h1 class="text-4xl font-serif font-black text-bakery-crust dark:text-amber-500">Order History</h1>
-            <p class="text-stone-500 font-medium">Track your artisanal bakes and deliveries.</p>
-        </div>
-    </div>
+<div class="space-y-10 animate-fade-up">
+    <SectionHeader Eyebrow="the order book"
+                   Subtitle="Every basket placed today, with what it cost and where it is in the bake.">
+        Orders
+    </SectionHeader>
 
-    @if (_isLoading)
-    {
-        <div class="space-y-4">
-            @for(int i=0; i<5; i++) {
-                <div class="glass-card h-24 animate-pulse"></div>
-            }
-        </div>
-    }
-    else if (_orders == null || !_orders.Any())
-    {
-        <div class="glass-card p-16 text-center">
-            <div class="text-6xl mb-6">🧾</div>
-            <h3 class="text-2xl font-serif font-black mb-2">No orders yet</h3>
-            <p class="text-stone-500 mb-8">Your order history will appear here once you place an order.</p>
-            <a href="/" class="btn btn-primary px-8 shadow-lg shadow-bakery-crust/20">Go to Storefront</a>
-        </div>
-    }
-    else
-    {
-        <div class="glass-card overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-bakery-crust/5 border-b border-bakery-crust/10">
-                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60">Order ID</th>
-                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60">Date</th>
-                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60">Customer</th>
-                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60">Product</th>
-                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60">Total</th>
-                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60">Status</th>
-                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60 text-right">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-bakery-crust/5">
-                        @foreach (var order in _orders)
-                        {
-                            <tr class="hover:bg-bakery-crust/5 transition-colors group">
-                                <td class="px-6 py-4">
-                                    <div class="text-xs font-black text-stone-400 font-mono tracking-tighter">@order.Id.ToString().ToUpper()[..8]</div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="text-sm font-medium opacity-80">@TzService.FormatLong(order.OrderDate)</div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="font-bold text-stone-900 dark:text-stone-100">@order.CustomerName</div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="text-sm">
-                                        <span class="font-bold">@GetProductName(order.ProductId)</span>
-                                        <span class="opacity-50 mx-1">×</span>
-                                        <span class="font-black text-bakery-crust dark:text-amber-500">@order.Quantity</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="font-serif font-black text-lg">$@order.TotalPrice.ToString("0.00")</div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    @switch (order.Status)
-                                    {
-                                        case OrderStatus.Placed:
-                                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-[0.7rem] font-black uppercase tracking-widest">Placed</span>
-                                            break;
-                                        case OrderStatus.Processing:
-                                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-[0.7rem] font-black uppercase tracking-widest">Baking</span>
-                                            break;
-                                        case OrderStatus.Completed:
-                                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[0.7rem] font-black uppercase tracking-widest">Ready</span>
-                                            break;
-                                        case OrderStatus.Cancelled:
-                                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-[0.7rem] font-black uppercase tracking-widest">Cancelled</span>
-                                            break;
-                                    }
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    @if (order.Status == OrderStatus.Placed)
-                                    {
-                                        <button class="w-8 h-8 flex items-center justify-center rounded-xl bg-red-100 text-red-700 hover:bg-red-500 hover:text-white transition-all shadow-sm" title="Cancel Order" @onclick="() => CancelOrder(order.Id)" disabled="@_isCancelling">
-                                            ×
-                                        </button>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    }
+    <LedgerTable TItem="OrderItem"
+                 Items="@_orders"
+                 Loading="@_isLoading">
+        <Header>
+            <th>Order</th>
+            <th>Placed</th>
+            <th>Customer</th>
+            <th>Item</th>
+            <th class="text-right">Total</th>
+            <th>Status</th>
+            <th class="text-right">Actions</th>
+        </Header>
+        <Row Context="order">
+            <td>
+                <code class="font-mono text-xs text-ink-muted">@order.Id.ToString().ToUpper()[..8]</code>
+            </td>
+            <td>
+                <span class="font-mono text-sm text-ink-muted">@TzService.FormatLong(order.OrderDate)</span>
+            </td>
+            <td>
+                <span class="font-serif font-bold">@order.CustomerName</span>
+            </td>
+            <td>
+                <span class="font-bold">@GetProductName(order.ProductId)</span>
+                <span class="text-ink-muted mx-1.5">×</span>
+                <span class="font-mono font-bold text-chocolate">@order.Quantity</span>
+            </td>
+            <td class="text-right">
+                <span class="font-mono font-bold">€@order.TotalPrice.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)</span>
+            </td>
+            <td>
+                <StatusBadge Status="@MapStatus(order.Status)" RotateKey="@order.Id" />
+            </td>
+            <td class="text-right">
+                @if (order.Status == OrderStatus.Placed)
+                {
+                    <button type="button"
+                            class="w-8 h-8 inline-flex items-center justify-center rounded-xl hover:bg-raspberry/15 transition-colors text-raspberry"
+                            title="Cancel order"
+                            disabled="@_isCancelling"
+                            @onclick="() => AskCancel(order)">
+                        <Doodle Name="glyph-x" Class="w-4 h-4" ViewBox="0 0 24 24" />
+                    </button>
+                }
+            </td>
+        </Row>
+        <Empty>
+            <EmptyState Doodle="doodle-cookie" Headline="No orders yet">
+                <ChildContent>
+                    Your order book will fill up as soon as customers start placing orders.
+                </ChildContent>
+                <Action>
+                    <PaperButton Href="/" Glyph="glyph-arrow-right" TrailingGlyph="true">
+                        Open the storefront
+                    </PaperButton>
+                </Action>
+            </EmptyState>
+        </Empty>
+    </LedgerTable>
 </div>
 
-@if (!string.IsNullOrEmpty(_notificationMessage))
-{
-    <div class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] animate-in slide-in-from-bottom-8 duration-500">
-        <div class="px-6 py-3 rounded-2xl shadow-xl backdrop-blur-md flex items-center gap-3 @(_notificationIsError ? "bg-red-500 text-white" : "bg-bakery-crust text-bakery-dough")">
-            <span class="text-lg">@(_notificationIsError ? "⚠" : "✨")</span>
-            <span class="font-bold text-sm tracking-tight">@_notificationMessage</span>
-        </div>
-    </div>
-}
+<Confirm @bind-Open="_confirmCancelOpen"
+         Title="Cancel this order?"
+         Eyebrow="heads up"
+         ConfirmLabel="Yes, cancel"
+         CancelLabel="Keep it"
+         Busy="@_isCancelling"
+         OnConfirm="ConfirmCancel">
+    Inventory will be restored. The customer won't be charged.
+</Confirm>
+
+<Toast @bind-Message="_toast" Variant="@_toastVariant" />
 
 @code {
     private List<OrderItem>? _orders;
     private Dictionary<Guid, string> _productNames = new();
     private bool _isLoading = true;
-    private bool _isCancelling = false;
-    private string _notificationMessage = "";
-    private bool _notificationIsError = false;
+    private bool _isCancelling;
+
+    private bool _confirmCancelOpen;
+    private Guid _pendingCancelId;
+
+    private string? _toast;
+    private Toast.ToastVariant _toastVariant = Toast.ToastVariant.Success;
+
     private System.Threading.Timer? _timer;
 
     protected override async Task OnInitializedAsync()
@@ -134,6 +110,8 @@
             StateHasChanged();
         }), null, 2000, 2000);
     }
+
+    public void Dispose() => _timer?.Dispose();
 
     private async Task LoadOrders()
     {
@@ -148,7 +126,7 @@
         }
         catch (Exception ex)
         {
-            ShowNotification($"Failed to load orders: {ex.Message}", true);
+            ShowToast($"Failed to load orders: {ex.Message}", Toast.ToastVariant.Error);
             _orders = new();
         }
         finally
@@ -157,52 +135,57 @@
         }
     }
 
-    public void Dispose() => _timer?.Dispose();
+    private string GetProductName(Guid id) =>
+        _productNames.TryGetValue(id, out var name) ? name : "Unknown product";
 
-    private string GetProductName(Guid id)
+    /// <summary>Maps OrderStatus to the BakeryStatus used by StatusBadge so the
+    /// existing user-facing labels ("Baking", "Ready") are preserved.</summary>
+    private static BakeryStatus MapStatus(OrderStatus s) => s switch
     {
-        return _productNames.TryGetValue(id, out var name) ? name : "Unknown Product";
+        OrderStatus.Placed     => BakeryStatus.Placed,
+        OrderStatus.Processing => BakeryStatus.Baking,
+        OrderStatus.Completed  => BakeryStatus.Ready,
+        OrderStatus.Cancelled  => BakeryStatus.Cancelled,
+        _                      => BakeryStatus.Queued,
+    };
+
+    private void AskCancel(OrderItem order)
+    {
+        _pendingCancelId = order.Id;
+        _confirmCancelOpen = true;
     }
 
-    private async Task CancelOrder(Guid id)
+    private async Task ConfirmCancel()
     {
         if (_isCancelling) return;
         _isCancelling = true;
-
         try
         {
-            var success = await ApiClient.CancelOrderAsync(id);
+            var success = await ApiClient.CancelOrderAsync(_pendingCancelId);
             if (success)
             {
-                ShowNotification("Order cancelled successfully.", false);
-                await LoadOrders(); // Refresh table
+                ShowToast("Order cancelled.", Toast.ToastVariant.Success);
+                await LoadOrders();
             }
             else
             {
-                ShowNotification("Failed to cancel order.", true);
+                ShowToast("Failed to cancel order.", Toast.ToastVariant.Error);
             }
         }
         catch (Exception ex)
         {
-            ShowNotification($"Error cancelling order: {ex.Message}", true);
+            ShowToast($"Cancel failed: {ex.Message}", Toast.ToastVariant.Error);
         }
         finally
         {
             _isCancelling = false;
+            _confirmCancelOpen = false;
         }
     }
 
-    private void ShowNotification(string message, bool isError)
+    private void ShowToast(string msg, Toast.ToastVariant variant)
     {
-        _notificationMessage = message;
-        _notificationIsError = isError;
-        StateHasChanged();
-        
-        _ = Task.Run(async () =>
-        {
-            await Task.Delay(3000);
-            _notificationMessage = "";
-            await InvokeAsync(StateHasChanged);
-        });
+        _toastVariant = variant;
+        _toast = msg;
     }
 }

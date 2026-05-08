@@ -9,7 +9,7 @@
     <h2 class="font-serif font-bold text-3xl sm:text-4xl text-ink tracking-tight underline-sketch inline-block">
         @ChildContent
     </h2>
-    @if (Subtitle is not null)
+    @if (!string.IsNullOrEmpty(Subtitle))
     {
         <p class="mt-2 text-ink-muted max-w-2xl">@Subtitle</p>
     }
@@ -21,8 +21,8 @@
     /// <summary>Hand-lettered Caveat label rendered above the title (e.g. "today's").</summary>
     [Parameter] public string? Eyebrow { get; set; }
 
-    /// <summary>Optional supporting copy below the title.</summary>
-    [Parameter] public RenderFragment? Subtitle { get; set; }
+    /// <summary>Optional supporting copy below the title (plain text).</summary>
+    [Parameter] public string? Subtitle { get; set; }
 
     [Parameter] public string Class { get; set; } = "";
 }

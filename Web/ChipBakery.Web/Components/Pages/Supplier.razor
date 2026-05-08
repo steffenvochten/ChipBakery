@@ -6,192 +6,165 @@
 @inject TimezoneService TzService
 @implements IDisposable
 
-<PageTitle>Supplier | Chip Bakery</PageTitle>
+<PageTitle>Supplier · ChipBakery</PageTitle>
 
-<div class="space-y-12 animate-in fade-in duration-700">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-            <h1 class="text-4xl sm:text-5xl font-black tracking-tight text-bakery-crust dark:text-amber-400">
-                Supplier
-            </h1>
-            <p class="text-lg text-bakery-crust/60 dark:text-stone-400 font-medium">
-                Manage scheduled supplies and ingredient transports.
-            </p>
-        </div>
-        <button class="btn btn-primary shadow-lg shadow-bakery-crust/20" @onclick="OpenCreateModal">
-            <span class="text-lg mr-2">+</span> Add Supply
-        </button>
+<div class="space-y-12 animate-fade-up">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+        <SectionHeader Eyebrow="the back door"
+                       Subtitle="Scheduled deliveries from the supplier and the running logbook of arrivals.">
+            Supplier
+        </SectionHeader>
+        <PaperButton Variant="ButtonVariant.Chocolate"
+                     Glyph="glyph-plus"
+                     OnClick="OpenCreateModal">
+            New supply
+        </PaperButton>
     </div>
 
-    @if (!string.IsNullOrEmpty(_errorMessage))
-    {
-        <div class="rounded-3xl bg-red-100 dark:bg-red-900/30 border border-red-300/50 dark:border-red-700/40 text-red-700 dark:text-red-300 p-5 font-bold flex items-center justify-between gap-4">
-            <span>@_errorMessage</span>
-            <button class="btn btn-outline py-2 text-xs" @onclick="ClearError">Dismiss</button>
-        </div>
-    }
-
-    <!-- Ingredient Supplies -->
-    <section class="space-y-6">
-        <div>
-            <span class="text-xs font-black uppercase tracking-widest text-bakery-crust dark:text-amber-500 block">Scheduled</span>
-            <h2 class="text-2xl font-serif font-black text-bakery-crust dark:text-stone-100">Ingredient Supplies</h2>
+    <section class="space-y-5">
+        <div class="flex items-baseline justify-between">
+            <div>
+                <div class="display-hand text-xl text-kraft leading-none mb-1">scheduled</div>
+                <h2 class="font-serif font-bold text-2xl text-ink">Ingredient supplies</h2>
+            </div>
+            @if (_supplies is not null) {
+                <span class="text-xs text-ink-muted">@_supplies.Count active</span>
+            }
         </div>
 
         @if (_isLoadingSupplies)
         {
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                @for (int i = 0; i < 3; i++)
-                {
-                    <div class="glass-card h-40 animate-pulse"></div>
-                }
+                @for (int i = 0; i < 3; i++) { <Skeleton Variant="Skeleton.SkeletonVariant.Card" /> }
             </div>
         }
-        else if (_supplies == null || !_supplies.Any())
+        else if (_supplies is null || _supplies.Count == 0)
         {
-            <div class="glass-card p-12 text-center">
-                <h3 class="text-xl font-serif font-black mb-2">No scheduled supplies</h3>
-                <p class="text-stone-500">Create one to start tracking ingredient deliveries.</p>
-            </div>
+            <PaperCard>
+                <EmptyState Doodle="utensil-bowl" Headline="No scheduled supplies">
+                    <ChildContent>Add a supply contract to start tracking deliveries.</ChildContent>
+                    <Action><PaperButton Glyph="glyph-plus" OnClick="OpenCreateModal">New supply</PaperButton></Action>
+                </EmptyState>
+            </PaperCard>
         }
         else
         {
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 @foreach (var s in _supplies)
                 {
-                    <div class="glass-card p-6 flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300">
-                        <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <h3 class="text-xl font-bold text-bakery-crust dark:text-stone-100">@s.IngredientName</h3>
-                                <span class="text-xs font-black uppercase tracking-widest text-bakery-crust/40 dark:text-stone-500">@s.Quantity</span>
+                    <PaperCard RotateKey="@s.Id" Tape="TapeColor.Kraft" Hoverable="true">
+                        <div class="flex items-start justify-between mb-3 gap-2">
+                            <div class="min-w-0">
+                                <div class="display-hand text-lg text-kraft leading-none mb-1">supply</div>
+                                <h3 class="font-serif font-bold text-xl text-ink truncate">@s.IngredientName</h3>
+                                <p class="text-sm text-ink-muted mt-1">from <span class="font-bold text-ink">@s.SupplierName</span></p>
                             </div>
-                            <p class="text-sm text-stone-500 mb-3">From <span class="font-bold">@s.SupplierName</span></p>
-                            <div class="text-2xl font-black text-amber-700 dark:text-amber-500">
-                                $@s.Price.ToString("0.00")
-                            </div>
-                            <p class="text-xs text-stone-400 mt-2">@TzService.FormatShort(s.ScheduledDate)</p>
+                            <Stamp Color="BakeryColor.Kraft" RotateKey="@s.Id">@s.Quantity</Stamp>
                         </div>
-                        <div class="mt-6 pt-4 border-t border-bakery-crust/5 flex gap-2">
-                            <button class="w-8 h-8 flex items-center justify-center rounded-xl bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="Edit" @onclick="() => OpenEditModal(s)">
-                                ✎
-                            </button>
-                            <button class="w-8 h-8 flex items-center justify-center rounded-xl bg-red-100 text-red-700 hover:bg-red-500 hover:text-white transition-all shadow-sm" title="Delete" @onclick="() => DeleteSupply(s.Id)">
-                                ×
+                        <div class="flex items-baseline gap-2 mt-3">
+                            <span class="font-mono font-bold text-2xl text-chocolate">€@s.Price.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)</span>
+                        </div>
+                        <p class="text-xs font-mono text-ink-muted mt-2">arrives @TzService.FormatShort(s.ScheduledDate)</p>
+                        <div class="mt-5 pt-3 border-t flex items-center gap-1" style="border-color: rgb(var(--ink) / 0.08);">
+                            <PaperButton Variant="ButtonVariant.Outline"
+                                         Size="BakerySize.Sm"
+                                         Glyph="glyph-pencil"
+                                         OnClick="() => OpenEditModal(s)">
+                                Edit
+                            </PaperButton>
+                            <button type="button"
+                                    class="ml-auto w-9 h-9 flex items-center justify-center rounded-xl hover:bg-raspberry/15 transition-colors text-raspberry"
+                                    title="Delete"
+                                    @onclick="() => AskDelete(s)">
+                                <Doodle Name="glyph-trash" Class="w-4 h-4" ViewBox="0 0 24 24" />
                             </button>
                         </div>
-                    </div>
+                    </PaperCard>
                 }
             </div>
         }
     </section>
 
-    <!-- Recent Transports -->
-    <section class="space-y-6">
+    <section class="space-y-5">
         <div>
-            <span class="text-xs font-black uppercase tracking-widest text-bakery-crust dark:text-amber-500 block">Logbook</span>
-            <h2 class="text-2xl font-serif font-black text-bakery-crust dark:text-stone-100">Recent Transports</h2>
+            <div class="display-hand text-xl text-kraft leading-none mb-1">logbook</div>
+            <h2 class="font-serif font-bold text-2xl text-ink">Recent transports</h2>
         </div>
 
-        @if (_isLoadingTransports)
-        {
-            <div class="space-y-3">
-                @for (int i = 0; i < 4; i++)
-                {
-                    <div class="glass-card h-16 animate-pulse"></div>
-                }
-            </div>
-        }
-        else if (_transports == null || !_transports.Any())
-        {
-            <div class="glass-card p-12 text-center">
-                <p class="text-stone-500">No transports yet.</p>
-            </div>
-        }
-        else
-        {
-            <div class="glass-card overflow-hidden">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-bakery-crust/5 border-b border-bakery-crust/10">
-                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60">Ingredient</th>
-                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60">Quantity</th>
-                            <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-bakery-crust/60">Time</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-bakery-crust/5">
-                        @foreach (var t in _transports)
-                        {
-                            <tr class="hover:bg-bakery-crust/5 transition-colors">
-                                <td class="px-6 py-4 font-bold">@t.IngredientName</td>
-                                <td class="px-6 py-4">@t.Quantity.ToString("N2") <span class="text-stone-500 text-xs">@t.Unit</span></td>
-                                <td class="px-6 py-4 text-sm text-stone-500">@TzService.FormatShort(t.Timestamp)</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
+        <LedgerTable TItem="SupplierTransportDto"
+                     Items="@_transports"
+                     Loading="@_isLoadingTransports"
+                     EmptyHeadline="No transports yet">
+            <Header>
+                <th>Ingredient</th>
+                <th class="text-right">Quantity</th>
+                <th>Arrived</th>
+            </Header>
+            <Row Context="t">
+                <td><span class="font-serif font-bold">@t.IngredientName</span></td>
+                <td class="text-right"><span class="font-mono">@t.Quantity.ToString("N2", System.Globalization.CultureInfo.InvariantCulture) <span class="text-ink-muted">@t.Unit</span></span></td>
+                <td><span class="font-mono text-sm text-ink-muted">@TzService.FormatShort(t.Timestamp)</span></td>
+            </Row>
+        </LedgerTable>
     </section>
 </div>
 
-@if (_isModalOpen)
-{
-    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-stone-950/40 backdrop-blur-sm" @onclick="CloseModal"></div>
-        <div class="relative glass-card w-full max-w-md p-8 shadow-2xl animate-in fade-in zoom-in duration-300">
-            <button class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-bakery-crust/5 transition-colors text-2xl" @onclick="CloseModal">×</button>
-
-            <div class="mb-8">
-                <span class="text-xs font-black uppercase tracking-widest text-bakery-crust dark:text-amber-500 mb-2 block">Supply</span>
-                <h3 class="text-3xl font-serif font-black">@(_isEditMode ? "Edit Supply" : "New Supply")</h3>
+<RecipeModal @bind-Open="_isModalOpen"
+             Title="@(_isEditMode ? "Edit supply" : "New supply")"
+             Eyebrow="@(_isEditMode ? "update" : "schedule")"
+             Size="Md">
+    <ChildContent>
+        @if (!string.IsNullOrEmpty(_modalError))
+        {
+            <div class="mb-4 px-4 py-3 rounded-2xl text-sm font-bold"
+                 style="background-color: rgb(var(--raspberry) / 0.12); color: rgb(var(--raspberry));"
+                 role="alert">@_modalError</div>
+        }
+        <EditForm Model="_model" OnValidSubmit="SaveSupply">
+            <div class="space-y-4">
+                <FormField Label="Ingredient" Required="true">
+                    <InputText class="form-control" @bind-Value="_model.IngredientName" />
+                </FormField>
+                <FormField Label="Supplier" Required="true">
+                    <InputText class="form-control" @bind-Value="_model.SupplierName" />
+                </FormField>
+                <div class="grid grid-cols-2 gap-3">
+                    <FormField Label="Quantity">
+                        <InputNumber class="form-control font-mono" @bind-Value="_model.Quantity" min="1" />
+                    </FormField>
+                    <FormField Label="Price (€)">
+                        <InputNumber class="form-control font-mono" @bind-Value="_model.Price" min="0.01" step="0.01" />
+                    </FormField>
+                </div>
+                <FormField Label="Scheduled date">
+                    <InputDate class="form-control" @bind-Value="_model.ScheduledDate" />
+                </FormField>
             </div>
+        </EditForm>
+    </ChildContent>
+    <Footer>
+        <PaperButton Variant="ButtonVariant.Ghost" OnClick="() => _isModalOpen = false" Disabled="@_isSaving">Cancel</PaperButton>
+        <PaperButton Variant="ButtonVariant.Chocolate" Loading="@_isSaving" OnClick="SaveSupply">
+            @(_isEditMode ? "Save changes" : "Add supply")
+        </PaperButton>
+    </Footer>
+</RecipeModal>
 
-            @if (!string.IsNullOrEmpty(_modalError))
-            {
-                <div class="mb-4 px-4 py-3 rounded-2xl bg-red-100 text-red-700 text-sm font-bold">@_modalError</div>
-            }
+<Confirm @bind-Open="_confirmDeleteOpen"
+         Title="@($"Delete supply for {_pendingDeleteName}?")"
+         Eyebrow="heads up"
+         ConfirmLabel="Yes, delete"
+         OnConfirm="ConfirmDelete">
+    The scheduled delivery will no longer arrive automatically.
+</Confirm>
 
-            <EditForm Model="_model" OnValidSubmit="SaveSupply" class="space-y-6">
-                <div class="form-group">
-                    <label class="form-label">Ingredient Name</label>
-                    <InputText class="form-control" @bind-Value="_model.IngredientName" required />
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Supplier Name</label>
-                    <InputText class="form-control" @bind-Value="_model.SupplierName" required />
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="form-group">
-                        <label class="form-label">Quantity</label>
-                        <InputNumber class="form-control" @bind-Value="_model.Quantity" min="1" required />
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Price ($)</label>
-                        <InputNumber class="form-control" @bind-Value="_model.Price" min="0.01" step="0.01" required />
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Scheduled Date</label>
-                    <InputDate class="form-control" @bind-Value="_model.ScheduledDate" required />
-                </div>
-
-                <div class="flex gap-3 pt-4">
-                    <button type="button" class="btn btn-outline flex-1" @onclick="CloseModal">Cancel</button>
-                    <button type="submit" class="btn btn-accent flex-1 shadow-lg shadow-amber-500/20" disabled="@_isSaving">
-                        @(_isSaving ? "Saving..." : "Save Supply")
-                    </button>
-                </div>
-            </EditForm>
-        </div>
-    </div>
-}
+<Toast @bind-Message="_toast" Variant="@_toastVariant" />
 
 @code {
     private List<IngredientSupplyDto>? _supplies;
     private List<SupplierTransportDto>? _transports;
     private bool _isLoadingSupplies = true;
     private bool _isLoadingTransports = true;
-    private string? _errorMessage;
 
     private bool _isModalOpen;
     private bool _isEditMode;
@@ -199,6 +172,14 @@
     private SupplyModel _model = new();
     private bool _isSaving;
     private string? _modalError;
+
+    private bool _confirmDeleteOpen;
+    private Guid _pendingDeleteId;
+    private string _pendingDeleteName = "";
+
+    private string? _toast;
+    private Toast.ToastVariant _toastVariant = Toast.ToastVariant.Success;
+
     private System.Threading.Timer? _timer;
 
     protected override async Task OnInitializedAsync()
@@ -211,6 +192,8 @@
         }), null, 2000, 2000);
     }
 
+    public void Dispose() => _timer?.Dispose();
+
     private async Task LoadSupplies()
     {
         try
@@ -219,7 +202,7 @@
         }
         catch (Exception ex)
         {
-            _errorMessage = $"Failed to load supplies: {ex.Message}";
+            ShowToast($"Failed to load supplies: {ex.Message}", Toast.ToastVariant.Error);
             _supplies = new();
         }
         finally
@@ -236,7 +219,7 @@
         }
         catch (Exception ex)
         {
-            _errorMessage = $"Failed to load transports: {ex.Message}";
+            ShowToast($"Failed to load transports: {ex.Message}", Toast.ToastVariant.Error);
             _transports = new();
         }
         finally
@@ -245,13 +228,11 @@
         }
     }
 
-    public void Dispose() => _timer?.Dispose();
-
     private void OpenCreateModal()
     {
         _isEditMode = false;
-        _editingId = null;
-        _model = new SupplyModel { Quantity = 10, Price = 1.00m, ScheduledDate = DateTime.Today.AddDays(1) };
+        _editingId  = null;
+        _model      = new SupplyModel { Quantity = 10, Price = 1.00m, ScheduledDate = DateTime.Today.AddDays(1) };
         _modalError = null;
         _isModalOpen = true;
     }
@@ -259,21 +240,18 @@
     private void OpenEditModal(IngredientSupplyDto s)
     {
         _isEditMode = true;
-        _editingId = s.Id;
-        _model = new SupplyModel
+        _editingId  = s.Id;
+        _model      = new SupplyModel
         {
             IngredientName = s.IngredientName,
-            SupplierName = s.SupplierName,
-            Quantity = s.Quantity,
-            Price = s.Price,
-            ScheduledDate = s.ScheduledDate
+            SupplierName   = s.SupplierName,
+            Quantity       = s.Quantity,
+            Price          = s.Price,
+            ScheduledDate  = s.ScheduledDate,
         };
-        _modalError = null;
+        _modalError  = null;
         _isModalOpen = true;
     }
-
-    private void CloseModal() => _isModalOpen = false;
-    private void ClearError() => _errorMessage = null;
 
     private async Task SaveSupply()
     {
@@ -286,13 +264,15 @@
             {
                 var req = new UpdateIngredientSupplyRequest(_model.IngredientName, _model.SupplierName, _model.Quantity, _model.Price, _model.ScheduledDate);
                 await ApiClient.UpdateIngredientSupplyAsync(_editingId.Value, req);
+                ShowToast("Supply updated.", Toast.ToastVariant.Success);
             }
             else
             {
                 var req = new CreateIngredientSupplyRequest(_model.IngredientName, _model.SupplierName, _model.Quantity, _model.Price, _model.ScheduledDate);
                 await ApiClient.CreateIngredientSupplyAsync(req);
+                ShowToast("Supply added.", Toast.ToastVariant.Success);
             }
-            CloseModal();
+            _isModalOpen = false;
             await LoadSupplies();
         }
         catch (Exception ex)
@@ -305,25 +285,40 @@
         }
     }
 
-    private async Task DeleteSupply(Guid id)
+    private void AskDelete(IngredientSupplyDto s)
     {
+        _pendingDeleteId   = s.Id;
+        _pendingDeleteName = s.IngredientName;
+        _confirmDeleteOpen = true;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        _confirmDeleteOpen = false;
         try
         {
-            await ApiClient.DeleteIngredientSupplyAsync(id);
+            await ApiClient.DeleteIngredientSupplyAsync(_pendingDeleteId);
             await LoadSupplies();
+            ShowToast("Supply deleted.", Toast.ToastVariant.Success);
         }
         catch (Exception ex)
         {
-            _errorMessage = $"Delete failed: {ex.Message}";
+            ShowToast($"Delete failed: {ex.Message}", Toast.ToastVariant.Error);
         }
+    }
+
+    private void ShowToast(string msg, Toast.ToastVariant variant)
+    {
+        _toastVariant = variant;
+        _toast = msg;
     }
 
     private class SupplyModel
     {
-        public string IngredientName { get; set; } = "";
-        public string SupplierName { get; set; } = "";
-        public int Quantity { get; set; }
-        public decimal Price { get; set; }
-        public DateTime ScheduledDate { get; set; } = DateTime.Today;
+        public string   IngredientName { get; set; } = "";
+        public string   SupplierName   { get; set; } = "";
+        public int      Quantity       { get; set; }
+        public decimal  Price          { get; set; }
+        public DateTime ScheduledDate  { get; set; } = DateTime.Today;
     }
 }

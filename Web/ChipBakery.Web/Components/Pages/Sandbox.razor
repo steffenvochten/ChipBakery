@@ -6,7 +6,8 @@
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10 space-y-14">
 
-    <SectionHeader Eyebrow="design system" Subtitle="@DescFragment">
+    <SectionHeader Eyebrow="design system"
+                   Subtitle="Comprehensive showcase of every Bakery component. This page is removed before final merge.">
         Sandbox
     </SectionHeader>
 
@@ -262,10 +263,6 @@
         "glyph-arrow-right", "glyph-plus", "glyph-pencil", "glyph-trash",
         "glyph-search", "glyph-sun", "glyph-moon",
     ];
-
-    private RenderFragment DescFragment => @<text>
-        Comprehensive showcase of every Bakery component. This page is removed before final merge.
-    </text>;
 
     private string NameHint() => $"You have {_qty} item{(_qty == 1 ? "" : "s")} in your basket.";
 

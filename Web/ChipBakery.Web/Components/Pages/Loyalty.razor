@@ -3,97 +3,122 @@
 @using ChipBakery.Web.Services
 @inject BakeryApiClient ApiClient
 
-<PageTitle>Loyalty - Chip Bakery</PageTitle>
+<PageTitle>Loyalty · ChipBakery</PageTitle>
 
-<div class="space-y-8 animate-in fade-in duration-700">
-    <div>
-        <h1 class="text-4xl sm:text-5xl font-black tracking-tight text-bakery-crust dark:text-amber-400">
-            Loyalty Rewards
-        </h1>
-        <p class="text-lg text-bakery-crust/60 dark:text-stone-400 font-medium">
-            Track your points and artisanal rewards.
-        </p>
-    </div>
+<div class="space-y-10 animate-fade-up">
+    <SectionHeader Eyebrow="for our regulars" Subtitle="@_subtitle">
+        Loyalty rewards
+    </SectionHeader>
 
-    <div class="glass-card p-8 max-w-2xl">
-        <div class="flex flex-col sm:flex-row gap-4 mb-8">
-            <div class="flex-1">
-                <label class="form-label">Customer ID</label>
-                <div class="relative">
-                    <input @bind="searchId" @bind:event="oninput" @onkeyup="HandleKeyUp" type="text" class="form-control pl-10" placeholder="Enter your ID..." />
-                    <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-bakery-crust/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+    <PaperCard Class="max-w-2xl" Tape="TapeColor.Lemon">
+        <FormField Label="Customer ID" For="cust-id" Hint="Paste the GUID from your order receipt.">
+            <div class="flex flex-col sm:flex-row gap-3">
+                <div class="relative flex-1">
+                    <input id="cust-id"
+                           class="form-control pl-10"
+                           placeholder="00000000-0000-0000-0000-000000000000"
+                           @bind="_searchId"
+                           @bind:event="oninput"
+                           @onkeyup="HandleKeyUp" />
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted opacity-60">
+                        <Doodle Name="glyph-search" Class="w-5 h-5" ViewBox="0 0 24 24" />
+                    </span>
                 </div>
+                <PaperButton Variant="ButtonVariant.Chocolate"
+                             OnClick="Lookup"
+                             Loading="@_isSearching"
+                             Disabled="@(_isSearching || string.IsNullOrWhiteSpace(_searchId))">
+                    Look up
+                </PaperButton>
             </div>
-            <button @onclick="Lookup" class="btn btn-primary self-end h-[46px] px-8">Lookup</button>
-        </div>
+        </FormField>
 
-        @if (isSearching)
-        {
-            <div class="animate-pulse space-y-6">
-                <div class="h-24 w-full bg-bakery-crust/5 dark:bg-stone-800 rounded-2xl"></div>
-                <div class="h-64 w-full bg-bakery-crust/5 dark:bg-stone-800 rounded-2xl"></div>
-            </div>
-        }
-        else if (loyalty != null)
-        {
-            <div class="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-                <div class="p-6 rounded-2xl bg-gradient-to-br from-bakery-dough to-amber-200/50 dark:from-stone-900 dark:to-stone-800 border border-bakery-crust/10">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-xs font-black uppercase tracking-widest text-bakery-crust/40 dark:text-stone-500 mb-1">Current Tier</p>
-                            <h2 class="text-3xl font-black text-bakery-crust dark:text-amber-400">@loyalty.Tier</h2>
+        <div class="mt-8">
+            @if (_isSearching)
+            {
+                <Skeleton Variant="Skeleton.SkeletonVariant.Card" />
+            }
+            else if (_loyalty is not null)
+            {
+                <div class="animate-fade-up space-y-8">
+                    @* ---- Tier punch card ---- *@
+                    <div class="relative rounded-3xl p-7 overflow-hidden"
+                         style="background: linear-gradient(135deg, rgb(var(--chocolate)) 0%, rgb(var(--kraft) / 0.85) 100%); color: rgb(var(--paper));">
+                        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 relative z-10">
+                            <div>
+                                <div class="display-hand text-2xl opacity-80 leading-none mb-1">currently</div>
+                                <div class="font-serif font-bold text-4xl tracking-tight">@_loyalty.Tier</div>
+                            </div>
+                            <div class="text-left sm:text-right">
+                                <div class="display-hand text-xl opacity-80 leading-none mb-1">total stamps</div>
+                                <div class="font-mono font-bold text-5xl sm:text-6xl tracking-tight">@_loyalty.TotalPoints</div>
+                            </div>
                         </div>
-                        <div class="text-right">
-                            <p class="text-xs font-black uppercase tracking-widest text-bakery-crust/40 dark:text-stone-500 mb-1">Total Points</p>
-                            <p class="text-5xl font-black text-amber-700 dark:text-amber-500 tracking-tighter">@loyalty.TotalPoints</p>
-                        </div>
+                        @* Subtle stamp pattern dots *@
+                        <div class="absolute inset-0 opacity-10 pointer-events-none"
+                             style="background-image: radial-gradient(circle, rgb(var(--paper)) 2px, transparent 2px); background-size: 28px 28px;"></div>
                     </div>
-                </div>
 
-                <div>
-                    <h3 class="text-xl font-bold text-bakery-crust dark:text-stone-100 mb-4">Recent Transactions</h3>
-                    <div class="space-y-3">
-                        @foreach (var tx in loyalty.Transactions)
+                    @* ---- Transactions ---- *@
+                    <div>
+                        <div class="flex items-baseline justify-between mb-4">
+                            <h3 class="font-serif font-bold text-xl text-ink">Recent stamps</h3>
+                            <span class="text-xs text-ink-muted">@_loyalty.Transactions.Count entries</span>
+                        </div>
+                        @if (_loyalty.Transactions.Count == 0)
                         {
-                            <div class="flex items-center justify-between p-4 rounded-xl bg-bakery-crust/5 dark:bg-stone-800/40 border border-bakery-crust/5">
-                                <div>
-                                    <p class="font-bold text-bakery-crust dark:text-stone-200">@tx.Description</p>
-                                    <p class="text-xs text-stone-500">@tx.Date.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</p>
-                                </div>
-                                <div class="text-lg font-black @(tx.Points >= 0 ? "text-green-500" : "text-red-500")">
-                                    @(tx.Points >= 0 ? "+" : "")@tx.Points
-                                </div>
+                            <EmptyState Doodle="doodle-cookie" Headline="No stamps yet" Size="BakerySize.Sm">
+                                Place an order to earn your first reward.
+                            </EmptyState>
+                        }
+                        else
+                        {
+                            <div class="space-y-2.5">
+                                @foreach (var tx in _loyalty.Transactions)
+                                {
+                                    <div class="flex items-center justify-between gap-4 px-4 py-3 rounded-2xl"
+                                         style="background-color: rgb(var(--ink) / 0.04); border: 1px dashed rgb(var(--ink) / 0.12);">
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <Doodle Name="@(tx.Points >= 0 ? "deco-sparkle" : "glyph-x")"
+                                                    Class="@($"w-5 h-5 flex-shrink-0 {(tx.Points >= 0 ? "text-basil" : "text-raspberry")}")"
+                                                    ViewBox="@(tx.Points >= 0 ? "0 0 32 32" : "0 0 24 24")" />
+                                            <div class="min-w-0">
+                                                <div class="font-bold text-ink truncate">@tx.Description</div>
+                                                <div class="text-xs text-ink-muted font-mono">@tx.Date.ToLocalTime().ToString("MMM dd, yyyy · HH:mm")</div>
+                                            </div>
+                                        </div>
+                                        <div class="@($"font-mono font-bold text-lg flex-shrink-0 {(tx.Points >= 0 ? "text-basil" : "text-raspberry")}")">
+                                            @(tx.Points >= 0 ? "+" : "")@tx.Points
+                                        </div>
+                                    </div>
+                                }
                             </div>
                         }
                     </div>
                 </div>
-            </div>
-        }
-        else if (!string.IsNullOrEmpty(errorMessage))
-        {
-            <div class="p-8 rounded-2xl bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-center">
-                <p class="text-lg font-black">@errorMessage</p>
-            </div>
-        }
-        else if (hasSearched && notFound)
-        {
-            <div class="p-12 text-center opacity-50">
-                <p class="text-xl font-bold">Customer not found.</p>
-                <p class="text-sm">Try another ID or place an order to join!</p>
-            </div>
-        }
-    </div>
+            }
+            else if (_hasSearched && _notFound)
+            {
+                <EmptyState Doodle="doodle-cookie" Headline="No customer found">
+                    Double-check the ID, or place an order to join the rewards programme.
+                </EmptyState>
+            }
+        </div>
+    </PaperCard>
 </div>
 
+<Toast @bind-Message="_toast" Variant="Toast.ToastVariant.Error" />
+
 @code {
-    private string searchId = "";
-    private bool isSearching = false;
-    private bool hasSearched = false;
-    private bool notFound = false;
-    private string? errorMessage;
-    private CustomerLoyalty? loyalty;
+    private string _searchId = "";
+    private bool _isSearching;
+    private bool _hasSearched;
+    private bool _notFound;
+    private string? _toast;
+    private CustomerLoyalty? _loyalty;
+
+    private static readonly string _subtitle =
+        "Find your stamps, see your tier, and watch the rewards rise loaf by loaf.";
 
     private async Task HandleKeyUp(KeyboardEventArgs e)
     {
@@ -102,32 +127,34 @@
 
     private async Task Lookup()
     {
-        if (!Guid.TryParse(searchId, out var customerId)) return;
+        if (!Guid.TryParse(_searchId, out var customerId))
+        {
+            _toast = "That doesn't look like a valid customer ID.";
+            return;
+        }
 
-        isSearching = true;
-        hasSearched = true;
-        notFound = false;
-        errorMessage = null;
-        loyalty = null;
+        _isSearching = true;
+        _hasSearched = true;
+        _notFound = false;
+        _toast = null;
+        _loyalty = null;
+
         try
         {
-            loyalty = await ApiClient.GetCustomerLoyaltyAsync(customerId);
-            if (loyalty is null)
-            {
-                notFound = true;
-            }
+            _loyalty = await ApiClient.GetCustomerLoyaltyAsync(customerId);
+            if (_loyalty is null) _notFound = true;
         }
         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
-            notFound = true;
+            _notFound = true;
         }
         catch (Exception)
         {
-            errorMessage = "Unable to fetch loyalty info — please try again.";
+            _toast = "We couldn't reach the loyalty service. Try again in a moment.";
         }
         finally
         {
-            isSearching = false;
+            _isSearching = false;
         }
     }
 }

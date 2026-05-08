@@ -5,149 +5,152 @@
 @inject BakeryApiClient ApiClient
 @implements IDisposable
 
-<PageTitle>Warehouse - Chip Bakery</PageTitle>
+<PageTitle>Warehouse · ChipBakery</PageTitle>
 
-<div class="space-y-8 animate-in fade-in duration-700">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-            <h1 class="text-4xl sm:text-5xl font-black tracking-tight text-bakery-crust dark:text-amber-400">
-                Warehouse
-            </h1>
-            <p class="text-lg text-bakery-crust/60 dark:text-stone-400 font-medium">
-                Manage raw materials and ingredients.
-            </p>
-        </div>
-        <button @onclick="OpenAddModal" class="btn btn-primary self-start sm:self-center shadow-bakery-crust/20">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            Add Ingredient
-        </button>
+<div class="space-y-10 animate-fade-up">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+        <SectionHeader Eyebrow="the pantry"
+                       Subtitle="Raw ingredients on hand. Restock from the supplier when a sack runs low.">
+            Warehouse
+        </SectionHeader>
+        <PaperButton Variant="ButtonVariant.Chocolate"
+                     Glyph="glyph-plus"
+                     OnClick="OpenAddModal">
+            Add ingredient
+        </PaperButton>
     </div>
 
-    @if (!string.IsNullOrEmpty(pageMessage))
-    {
-        <div class="rounded-3xl @(pageIsError ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300/50" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300/50") border p-4 font-bold flex items-center justify-between gap-4">
-            <span>@pageMessage</span>
-            <button class="btn btn-outline py-2 text-xs" @onclick="() => pageMessage = null">Dismiss</button>
-        </div>
-    }
-
-    @if (isLoading)
+    @if (_isLoading)
     {
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            @foreach (var i in Enumerable.Range(0, 6))
+            @for (int i = 0; i < 6; i++)
             {
-                <div class="glass-card p-6 space-y-4 animate-pulse">
-                    <div class="h-6 w-1/2 bg-bakery-crust/10 dark:bg-stone-800 rounded-lg"></div>
-                    <div class="h-10 w-full bg-bakery-crust/5 dark:bg-stone-800/50 rounded-xl"></div>
-                </div>
+                <Skeleton Variant="Skeleton.SkeletonVariant.Card" />
             }
         </div>
+    }
+    else if (_items.Count == 0)
+    {
+        <PaperCard>
+            <EmptyState Doodle="utensil-bowl" Headline="The pantry's empty">
+                <ChildContent>Add your first raw ingredient to start tracking warehouse stock.</ChildContent>
+                <Action>
+                    <PaperButton Glyph="glyph-plus" OnClick="OpenAddModal">Add ingredient</PaperButton>
+                </Action>
+            </EmptyState>
+        </PaperCard>
     }
     else
     {
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            @foreach (var item in warehouseItems)
+            @foreach (var item in _items)
             {
-                <div class="glass-card p-6 flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300">
-                    <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <h3 class="text-xl font-bold text-bakery-crust dark:text-stone-100">@item.Name</h3>
-                            <span class="text-xs font-black uppercase tracking-widest text-bakery-crust/40 dark:text-stone-500">@item.Unit</span>
+                <PaperCard RotateKey="@item.Id"
+                           Tape="@TapeFor(item)"
+                           Hoverable="true">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="min-w-0">
+                            <div class="display-hand text-lg text-kraft leading-none mb-1">ingredient</div>
+                            <h3 class="font-serif font-bold text-xl text-ink truncate">@item.Name</h3>
                         </div>
-                        <div class="text-3xl font-black text-amber-700 dark:text-amber-500">
-                            @item.Quantity.ToString("N2")
-                        </div>
+                        <Doodle Name="@DoodleFor(item)" Class="w-8 h-8 text-chocolate flex-shrink-0" />
                     </div>
-                    <div class="mt-6 pt-4 border-t border-bakery-crust/5 flex gap-2">
-                        <button class="btn btn-outline py-2 flex-1 text-xs" @onclick="() => RestockItem(item)">Restock</button>
+                    <div class="flex items-baseline gap-2 mt-4">
+                        <span class="font-mono font-bold text-3xl sm:text-4xl text-chocolate">
+                            @item.Quantity.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)
+                        </span>
+                        <span class="font-mono text-sm uppercase tracking-widest text-ink-muted">@item.Unit</span>
                     </div>
-                </div>
+                    <div class="mt-5 pt-3 border-t flex" style="border-color: rgb(var(--ink) / 0.08);">
+                        <PaperButton Variant="ButtonVariant.Outline"
+                                     Size="BakerySize.Sm"
+                                     Glyph="glyph-plus"
+                                     Class="w-full justify-center"
+                                     OnClick="() => OpenRestock(item)">
+                            Restock
+                        </PaperButton>
+                    </div>
+                </PaperCard>
             }
         </div>
     }
 </div>
 
-@if (showAddModal)
-{
-    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 backdrop-blur-md bg-stone-950/40 animate-in fade-in duration-300">
-        <div class="glass-card w-full max-w-md p-8 shadow-2xl bg-white/90 dark:bg-stone-900/90">
-            <h2 class="text-2xl font-black text-bakery-crust dark:text-amber-400 mb-6">Add New Ingredient</h2>
-
-            @if (!string.IsNullOrEmpty(addError))
-            {
-                <div class="mb-4 px-4 py-3 rounded-2xl bg-red-100 text-red-700 text-sm font-bold">@addError</div>
-            }
-
-            <div class="space-y-4">
-                <div>
-                    <label class="form-label">Ingredient Name</label>
-                    <input @bind="newItem.Name" type="text" class="form-control" placeholder="e.g. Bread Flour" />
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="form-label">Quantity</label>
-                        <input @bind="newItem.Quantity" type="number" class="form-control" />
-                    </div>
-                    <div>
-                        <label class="form-label">Unit</label>
-                        <input @bind="newItem.Unit" type="text" class="form-control" placeholder="kg, L, etc." />
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex gap-3 mt-8">
-                <button @onclick="CloseAddModal" class="btn btn-outline flex-1" disabled="@isSaving">Cancel</button>
-                <button @onclick="SaveItem" class="btn btn-primary flex-1" disabled="@isSaving">
-                    @(isSaving ? "Saving..." : "Save Ingredient")
-                </button>
+<RecipeModal @bind-Open="_addOpen"
+             Title="Add ingredient"
+             Eyebrow="new sack"
+             Size="Md">
+    <ChildContent>
+        @if (!string.IsNullOrEmpty(_addError))
+        {
+            <div class="mb-4 px-4 py-3 rounded-2xl text-sm font-bold"
+                 style="background-color: rgb(var(--raspberry) / 0.12); color: rgb(var(--raspberry));"
+                 role="alert">@_addError</div>
+        }
+        <div class="space-y-4">
+            <FormField Label="Name" Required="true">
+                <input class="form-control" placeholder="e.g. Bread flour" @bind="_newItem.Name" />
+            </FormField>
+            <div class="grid grid-cols-2 gap-3">
+                <FormField Label="Quantity">
+                    <input class="form-control font-mono" type="number" step="0.01" min="0" @bind="_newItem.Quantity" />
+                </FormField>
+                <FormField Label="Unit">
+                    <input class="form-control" placeholder="kg, L, units" @bind="_newItem.Unit" />
+                </FormField>
             </div>
         </div>
-    </div>
-}
+    </ChildContent>
+    <Footer>
+        <PaperButton Variant="ButtonVariant.Ghost" OnClick="() => _addOpen = false" Disabled="@_isSaving">Cancel</PaperButton>
+        <PaperButton Variant="ButtonVariant.Chocolate" Loading="@_isSaving" OnClick="SaveNew">Add ingredient</PaperButton>
+    </Footer>
+</RecipeModal>
 
-@if (restockTarget != null)
-{
-    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 backdrop-blur-md bg-stone-950/40 animate-in fade-in duration-300">
-        <div class="glass-card w-full max-w-md p-8 shadow-2xl bg-white/90 dark:bg-stone-900/90">
-            <span class="text-xs font-black uppercase tracking-widest text-bakery-crust dark:text-amber-500 block">Restock</span>
-            <h2 class="text-2xl font-black text-bakery-crust dark:text-amber-400 mb-6">@restockTarget.Name</h2>
-
-            @if (!string.IsNullOrEmpty(restockError))
+<RecipeModal @bind-Open="_restockOpen"
+             Title="@($"Restock {_restockTarget?.Name}")"
+             Eyebrow="dispatch supplier"
+             Size="Sm">
+    <ChildContent>
+        @if (_restockTarget is not null)
+        {
+            @if (!string.IsNullOrEmpty(_restockError))
             {
-                <div class="mb-4 px-4 py-3 rounded-2xl bg-red-100 text-red-700 text-sm font-bold">@restockError</div>
+                <div class="mb-4 px-4 py-3 rounded-2xl text-sm font-bold"
+                     style="background-color: rgb(var(--raspberry) / 0.12); color: rgb(var(--raspberry));"
+                     role="alert">@_restockError</div>
             }
+            <FormField Label="@($"Quantity ({_restockTarget.Unit})")" Hint="Will arrive via the supplier service.">
+                <input class="form-control font-mono" type="number" step="0.01" min="0" @bind="_restockQuantity" />
+            </FormField>
+        }
+    </ChildContent>
+    <Footer>
+        <PaperButton Variant="ButtonVariant.Ghost" OnClick="() => _restockOpen = false" Disabled="@_isRestocking">Cancel</PaperButton>
+        <PaperButton Variant="ButtonVariant.Chocolate" Loading="@_isRestocking" OnClick="ConfirmRestock">Dispatch</PaperButton>
+    </Footer>
+</RecipeModal>
 
-            <div>
-                <label class="form-label">Quantity (@restockTarget.Unit)</label>
-                <input @bind="restockQuantity" type="number" step="0.01" min="0" class="form-control" />
-            </div>
-
-            <div class="flex gap-3 mt-8">
-                <button @onclick="CancelRestock" class="btn btn-outline flex-1" disabled="@isRestocking">Cancel</button>
-                <button @onclick="ConfirmRestock" class="btn btn-primary flex-1" disabled="@isRestocking">
-                    @(isRestocking ? "Dispatching..." : "Confirm Restock")
-                </button>
-            </div>
-        </div>
-    </div>
-}
+<Toast @bind-Message="_toast" Variant="@_toastVariant" />
 
 @code {
-    private List<WarehouseItem> warehouseItems = new();
-    private bool isLoading = true;
-    private bool showAddModal = false;
-    private CreateWarehouseItemRequest newItem = new();
-    private bool isSaving = false;
-    private string? addError;
-    private string? pageMessage;
-    private bool pageIsError;
+    private List<WarehouseItem> _items = new();
+    private bool _isLoading = true;
 
-    private WarehouseItem? restockTarget;
-    private decimal restockQuantity = 50m;
-    private bool isRestocking = false;
-    private string? restockError;
+    private bool _addOpen;
+    private CreateWarehouseItemRequest _newItem = new();
+    private bool _isSaving;
+    private string? _addError;
+
+    private bool _restockOpen;
+    private WarehouseItem? _restockTarget;
+    private decimal _restockQuantity = 50m;
+    private bool _isRestocking;
+    private string? _restockError;
+
+    private string? _toast;
+    private Toast.ToastVariant _toastVariant = Toast.ToastVariant.Success;
+
     private System.Threading.Timer? _timer;
 
     protected override async Task OnInitializedAsync()
@@ -160,113 +163,127 @@
         }), null, 2000, 2000);
     }
 
+    public void Dispose() => _timer?.Dispose();
+
     private async Task LoadData()
     {
         try
         {
-            warehouseItems = await ApiClient.GetAllWarehouseItemsAsync();
+            _items = await ApiClient.GetAllWarehouseItemsAsync();
         }
         catch (Exception ex)
         {
-            ShowMessage($"Failed to load warehouse: {ex.Message}", true);
-            warehouseItems = new();
+            ShowToast($"Failed to load warehouse: {ex.Message}", Toast.ToastVariant.Error);
+            _items = new();
         }
         finally
         {
-            isLoading = false;
+            _isLoading = false;
         }
     }
-
-    public void Dispose() => _timer?.Dispose();
 
     private void OpenAddModal()
     {
-        addError = null;
-        showAddModal = true;
+        _addError = null;
+        _newItem  = new CreateWarehouseItemRequest();
+        _addOpen  = true;
     }
 
-    private void CloseAddModal() => showAddModal = false;
-
-    private async Task SaveItem()
+    private async Task SaveNew()
     {
-        if (isSaving) return;
-        if (string.IsNullOrWhiteSpace(newItem.Name))
+        if (_isSaving) return;
+        if (string.IsNullOrWhiteSpace(_newItem.Name))
         {
-            addError = "Name is required.";
+            _addError = "Name is required.";
             return;
         }
 
-        isSaving = true;
-        addError = null;
+        _isSaving = true;
+        _addError = null;
         try
         {
-            var success = await ApiClient.CreateWarehouseItemAsync(newItem);
+            var success = await ApiClient.CreateWarehouseItemAsync(_newItem);
             if (!success)
             {
-                addError = "Failed to save ingredient.";
+                _addError = "Failed to save ingredient.";
                 return;
             }
             await LoadData();
-            showAddModal = false;
-            newItem = new();
-            ShowMessage("Ingredient saved.", false);
+            _addOpen = false;
+            ShowToast("Ingredient added.", Toast.ToastVariant.Success);
         }
         catch (Exception ex)
         {
-            addError = $"Save failed: {ex.Message}";
+            _addError = $"Save failed: {ex.Message}";
         }
         finally
         {
-            isSaving = false;
+            _isSaving = false;
         }
     }
 
-    private void RestockItem(WarehouseItem item)
+    private void OpenRestock(WarehouseItem item)
     {
-        restockTarget = item;
-        restockQuantity = 50m;
-        restockError = null;
-    }
-
-    private void CancelRestock()
-    {
-        restockTarget = null;
-        restockError = null;
+        _restockTarget   = item;
+        _restockQuantity = 50m;
+        _restockError    = null;
+        _restockOpen     = true;
     }
 
     private async Task ConfirmRestock()
     {
-        if (restockTarget is null || isRestocking) return;
-        if (restockQuantity <= 0)
+        if (_restockTarget is null || _isRestocking) return;
+        if (_restockQuantity <= 0)
         {
-            restockError = "Quantity must be greater than 0.";
+            _restockError = "Quantity must be greater than 0.";
             return;
         }
 
-        isRestocking = true;
-        restockError = null;
+        _isRestocking = true;
+        _restockError = null;
         try
         {
-            var req = new RestockRequest(restockTarget.Name, restockQuantity, restockTarget.Unit);
+            var req = new RestockRequest(_restockTarget.Name, _restockQuantity, _restockTarget.Unit);
             await ApiClient.DispatchRestockAsync(req);
-            var name = restockTarget.Name;
-            restockTarget = null;
+            var name = _restockTarget.Name;
+            _restockOpen   = false;
+            _restockTarget = null;
             await LoadData();
-            ShowMessage($"Restock dispatched for {name}.", false);
+            ShowToast($"Restock dispatched for {name}.", Toast.ToastVariant.Success);
         }
         catch (Exception ex)
         {
-            restockError = $"Restock failed: {ex.Message}";
+            _restockError = $"Restock failed: {ex.Message}";
         }
         finally
         {
-            isRestocking = false;
+            _isRestocking = false;
         }
     }
 
-    private void ShowMessage(string msg, bool isError)
+    private void ShowToast(string msg, Toast.ToastVariant variant)
     {
-        pageMessage = msg;
-        pageIsError = isError;
+        _toastVariant = variant;
+        _toast = msg;
+    }
+
+    private TapeColor TapeFor(WarehouseItem item)
+    {
+        return item.Quantity switch
+        {
+            <= 5    => TapeColor.Raspberry,
+            <= 20   => TapeColor.Lemon,
+            _       => TapeColor.Default,
+        };
+    }
+
+    private string DoodleFor(WarehouseItem item)
+    {
+        var name = item.Name?.ToLowerInvariant() ?? "";
+        if (name.Contains("flour") || name.Contains("sugar") || name.Contains("salt")) return "utensil-scale";
+        if (name.Contains("milk") || name.Contains("cream") || name.Contains("water")) return "utensil-bowl";
+        if (name.Contains("butter") || name.Contains("oil") || name.Contains("egg"))   return "utensil-whisk";
+        if (name.Contains("yeast") || name.Contains("starter"))                         return "deco-wheat";
+        return "deco-wheat";
     }
 }
