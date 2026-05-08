@@ -1,0 +1,27 @@
+@* Single source of truth for order/job/inventory status visualisation.
+   Pass a typed BakeryStatus or a raw string from the API. *@
+
+<Stamp Color="@Visual.Color"
+       Glyph="@Visual.Glyph"
+       RotateKey="@RotateKey"
+       Rotation="@Rotation"
+       Class="@Class">
+    @(Label ?? Visual.Label)
+</Stamp>
+
+@code {
+    [Parameter] public BakeryStatus? Status { get; set; }
+
+    /// <summary>Raw status string from an API response. Parsed best-effort if Status is null.</summary>
+    [Parameter] public string? StatusText { get; set; }
+
+    /// <summary>Override the displayed label (e.g. localisation).</summary>
+    [Parameter] public string? Label { get; set; }
+
+    [Parameter] public object? RotateKey { get; set; }
+    [Parameter] public double? Rotation { get; set; }
+    [Parameter] public string Class { get; set; } = "";
+
+    private StatusVisuals.Visual Visual =>
+        StatusVisuals.For(Status ?? StatusVisuals.Parse(StatusText));
+}

@@ -1,0 +1,290 @@
+@page "/sandbox"
+@using ChipBakery.Web.Components.Bakery
+@rendermode InteractiveServer
+
+<PageTitle>Sandbox · ChipBakery</PageTitle>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-10 space-y-14">
+
+    <SectionHeader Eyebrow="design system" Subtitle="@DescFragment">
+        Sandbox
+    </SectionHeader>
+
+    @* ---------- Buttons ---------- *@
+    <section>
+        <h3 class="font-serif font-bold text-xl mb-4">Buttons</h3>
+        <div class="flex flex-wrap items-center gap-3">
+            <PaperButton Variant="ButtonVariant.Chocolate">Place order</PaperButton>
+            <PaperButton Variant="ButtonVariant.Kraft">Restock</PaperButton>
+            <PaperButton Variant="ButtonVariant.Outline">Cancel</PaperButton>
+            <PaperButton Variant="ButtonVariant.Ghost">Back</PaperButton>
+            <PaperButton Variant="ButtonVariant.Danger">Delete</PaperButton>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 mt-3">
+            <PaperButton Size="BakerySize.Sm">Small</PaperButton>
+            <PaperButton Size="BakerySize.Md">Medium</PaperButton>
+            <PaperButton Size="BakerySize.Lg">Large</PaperButton>
+            <PaperButton Glyph="glyph-plus">With glyph</PaperButton>
+            <PaperButton Glyph="glyph-arrow-right" TrailingGlyph="true">Continue</PaperButton>
+            <PaperButton Loading="true">Loading</PaperButton>
+            <PaperButton Disabled="true">Disabled</PaperButton>
+        </div>
+    </section>
+
+    @* ---------- Stamps & status ---------- *@
+    <section>
+        <h3 class="font-serif font-bold text-xl mb-4">Stamps &amp; status badges</h3>
+        <div class="flex flex-wrap gap-3">
+            @foreach (var s in Enum.GetValues<BakeryStatus>())
+            {
+                <StatusBadge Status="@s" RotateKey="@s" />
+            }
+        </div>
+    </section>
+
+    @* ---------- Cards ---------- *@
+    <section>
+        <h3 class="font-serif font-bold text-xl mb-4">Paper cards</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <PaperCard>
+                <div class="font-serif font-bold text-lg mb-2">Plain card</div>
+                <p class="text-ink-muted text-sm">No decoration. Just a paper-textured surface.</p>
+            </PaperCard>
+
+            <PaperCard Tape="TapeColor.Lemon" RotateKey="@("a")" Hoverable="true">
+                <div class="font-serif font-bold text-lg mb-2">Taped &amp; tilted</div>
+                <p class="text-ink-muted text-sm">Yellow washi tape, deterministic wobble, hover-lift.</p>
+            </PaperCard>
+
+            <PaperCard Tape="TapeColor.Basil" Deckle="DeckleVariant.V2" RotateKey="@("b")">
+                <div class="font-serif font-bold text-lg mb-2">Torn bottom</div>
+                <p class="text-ink-muted text-sm">Basil tape, deckle V2, different wobble seed.</p>
+            </PaperCard>
+
+            <PaperCard Tape="TapeColor.Raspberry" Deckle="DeckleVariant.V3" RotateKey="@("c")">
+                <div class="font-serif font-bold text-lg mb-2">Recipe sheet</div>
+                <Stamp Color="BakeryColor.Basil" Glyph="glyph-check">Tested</Stamp>
+            </PaperCard>
+
+            <PaperCard Tape="TapeColor.Kraft" RotateKey="@("d")">
+                <div class="display-hand text-2xl text-kraft mb-1">today's</div>
+                <div class="font-serif font-bold text-2xl">Sourdough</div>
+                <div class="font-mono text-sm mt-2">€4.50</div>
+            </PaperCard>
+
+            <PaperCard Deckle="DeckleVariant.V4">
+                <SectionHeader Eyebrow="empty">Empty card</SectionHeader>
+                <p class="text-ink-muted text-sm">Just a deckle bottom, no tape, no wobble.</p>
+            </PaperCard>
+        </div>
+    </section>
+
+    @* ---------- Stickers ---------- *@
+    <section>
+        <h3 class="font-serif font-bold text-xl mb-4">Stickers</h3>
+        <div class="flex flex-wrap gap-6">
+            <Sticker RotateKey="@("s1")" Class="px-5 py-3 rounded-2xl" style="background-color: rgb(var(--lemon)); color: rgb(var(--ink));">
+                <div class="font-bold">Fresh!</div>
+            </Sticker>
+            <Sticker RotateKey="@("s2")" Class="px-5 py-3 rounded-2xl" style="background-color: rgb(var(--basil)); color: rgb(var(--paper));">
+                <div class="font-bold">Sold out</div>
+            </Sticker>
+            <Sticker RotateKey="@("s3")" Class="px-5 py-3 rounded-2xl" style="background-color: rgb(var(--raspberry)); color: rgb(var(--paper));">
+                <div class="font-bold">25% off</div>
+            </Sticker>
+        </div>
+    </section>
+
+    @* ---------- Stats ---------- *@
+    <section>
+        <h3 class="font-serif font-bold text-xl mb-4">Stats</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <Stat Label="Baking"  Value="3"  Glyph="glyph-fire"   />
+            <Stat Label="Awaiting" Value="1" Glyph="glyph-clock"  />
+            <Stat Label="Queued"  Value="6"  Glyph="utensil-timer"/>
+            <Stat Label="Done"    Value="42" Glyph="glyph-check"  />
+        </div>
+    </section>
+
+    @* ---------- Doodle gallery ---------- *@
+    <section>
+        <h3 class="font-serif font-bold text-xl mb-4">Doodle gallery</h3>
+        <div class="paper-surface p-6">
+            <div class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-6 text-chocolate">
+                @foreach (var d in AllDoodles)
+                {
+                    <div class="flex flex-col items-center gap-2">
+                        <Doodle Name="@d" Class="w-10 h-10" />
+                        <span class="font-mono text-[10px] text-ink-muted">@d</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    @* ---------- Ledger table ---------- *@
+    <section>
+        <h3 class="font-serif font-bold text-xl mb-4">Ledger table</h3>
+        <LedgerTable TItem="DemoOrder"
+                     Items="@_orders"
+                     HeaderTitle="Today's orders"
+                     HeaderGlyph="glyph-pencil">
+            <Header>
+                <th>Order</th>
+                <th>Customer</th>
+                <th class="text-right">Total</th>
+                <th>Status</th>
+            </Header>
+            <Row Context="o">
+                <td><code class="font-mono text-sm">#@o.Id</code></td>
+                <td class="font-serif font-bold">@o.Customer</td>
+                <td class="text-right font-mono">€@o.Total.ToString("0.00")</td>
+                <td><StatusBadge Status="@o.Status" RotateKey="@o.Id" /></td>
+            </Row>
+        </LedgerTable>
+    </section>
+
+    @* ---------- Skeletons ---------- *@
+    <section>
+        <h3 class="font-serif font-bold text-xl mb-4">Skeletons</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <Skeleton Variant="Skeleton.SkeletonVariant.Card" />
+            <div class="paper-surface p-6">
+                <Skeleton Lines="5" />
+            </div>
+        </div>
+    </section>
+
+    @* ---------- Empty state ---------- *@
+    <section>
+        <h3 class="font-serif font-bold text-xl mb-4">Empty state</h3>
+        <div class="paper-surface">
+            <EmptyState Doodle="doodle-cookie"
+                        Headline="Looks like we're sold out!"
+                        Size="BakerySize.Lg">
+                <ChildContent>
+                    <span>Check back tomorrow for fresh-baked pastries straight from the oven.</span>
+                </ChildContent>
+                <Action>
+                    <PaperButton Glyph="glyph-arrow-right" TrailingGlyph="true">Browse menu</PaperButton>
+                </Action>
+            </EmptyState>
+        </div>
+    </section>
+
+    @* ---------- Forms ---------- *@
+    <section>
+        <h3 class="font-serif font-bold text-xl mb-4">Forms</h3>
+        <PaperCard Class="max-w-md">
+            <div class="space-y-5">
+                <FormField Label="Customer name" Required="true" For="cust" Hint="@(NameHint())">
+                    <input id="cust" class="form-control" placeholder="e.g. Maria" />
+                </FormField>
+                <FormField Label="Quantity">
+                    <NumberStepper @bind-Value="_qty" Min="1" Max="20" />
+                </FormField>
+                <FormField Label="Pickup date">
+                    <DateStamp @bind-Value="_pickup" />
+                </FormField>
+                <FormField Label="Notes" For="notes">
+                    <input id="notes" class="form-ruled" placeholder="Anything else?" />
+                </FormField>
+            </div>
+        </PaperCard>
+    </section>
+
+    @* ---------- Overlays ---------- *@
+    <section>
+        <h3 class="font-serif font-bold text-xl mb-4">Overlays</h3>
+        <div class="flex flex-wrap gap-3">
+            <PaperButton OnClick="() => _modalOpen = true">Open modal</PaperButton>
+            <PaperButton Variant="ButtonVariant.Danger" OnClick="() => _confirmOpen = true">Open confirm</PaperButton>
+            <PaperButton Variant="ButtonVariant.Kraft" OnClick="ShowToast">Show toast</PaperButton>
+            <PaperButton Variant="ButtonVariant.Outline" OnClick="ShowError">Show error</PaperButton>
+        </div>
+    </section>
+</div>
+
+<RecipeModal @bind-Open="_modalOpen" Title="Place an order" Eyebrow="storefront" Size="Md">
+    <ChildContent>
+        <div class="space-y-4 text-ink-muted">
+            <p>This is a paper-page modal with taped corners.</p>
+            <FormField Label="Customer">
+                <input class="form-control" placeholder="Your name" />
+            </FormField>
+        </div>
+    </ChildContent>
+    <Footer>
+        <PaperButton Variant="ButtonVariant.Ghost" OnClick="() => _modalOpen = false">Cancel</PaperButton>
+        <PaperButton Variant="ButtonVariant.Chocolate" OnClick="() => _modalOpen = false">Confirm order</PaperButton>
+    </Footer>
+</RecipeModal>
+
+<Confirm @bind-Open="_confirmOpen"
+         Title="Cancel this order?"
+         Eyebrow="heads up"
+         ConfirmLabel="Yes, cancel"
+         CancelLabel="Keep it"
+         OnConfirm="HandleConfirmDestroy">
+    The order will be removed and the inventory will be restored. This cannot be undone.
+</Confirm>
+
+<Toast @bind-Message="_toast" Variant="@_toastVariant" />
+
+@code {
+    private bool _modalOpen;
+    private bool _confirmOpen;
+    private string? _toast;
+    private Toast.ToastVariant _toastVariant = Toast.ToastVariant.Success;
+    private int _qty = 2;
+    private DateOnly? _pickup = DateOnly.FromDateTime(DateTime.Today.AddDays(1));
+
+    private record DemoOrder(string Id, string Customer, decimal Total, BakeryStatus Status);
+
+    private readonly DemoOrder[] _orders =
+    [
+        new("A12-001", "Maria L.",     12.50m, BakeryStatus.Placed),
+        new("A12-002", "Jin H.",       28.00m, BakeryStatus.Baking),
+        new("A12-003", "Casey D.",      4.50m, BakeryStatus.Ready),
+        new("A12-004", "Olu O.",       16.75m, BakeryStatus.AwaitingIngredients),
+        new("A12-005", "Frida B.",      9.00m, BakeryStatus.Cancelled),
+        new("A12-006", "Theo W.",      22.30m, BakeryStatus.Completed),
+    ];
+
+    private static readonly string[] AllDoodles =
+    [
+        "doodle-croissant", "doodle-baguette", "doodle-loaf", "doodle-cupcake",
+        "doodle-donut", "doodle-cookie", "doodle-eclair", "doodle-pretzel",
+        "utensil-rolling-pin", "utensil-whisk", "utensil-bowl", "utensil-oven",
+        "utensil-timer", "utensil-scale",
+        "deco-wheat", "deco-sparkle", "deco-heart", "deco-swirl", "deco-star",
+        "glyph-check", "glyph-x", "glyph-clock", "glyph-fire",
+        "glyph-arrow-right", "glyph-plus", "glyph-pencil", "glyph-trash",
+        "glyph-search", "glyph-sun", "glyph-moon",
+    ];
+
+    private RenderFragment DescFragment => @<text>
+        Comprehensive showcase of every Bakery component. This page is removed before final merge.
+    </text>;
+
+    private string NameHint() => $"You have {_qty} item{(_qty == 1 ? "" : "s")} in your basket.";
+
+    private void ShowToast()
+    {
+        _toastVariant = Toast.ToastVariant.Success;
+        _toast = "Saved! That looked good.";
+    }
+
+    private void ShowError()
+    {
+        _toastVariant = Toast.ToastVariant.Error;
+        _toast = "Something went wrong. Try again.";
+    }
+
+    private void HandleConfirmDestroy()
+    {
+        _confirmOpen = false;
+        _toastVariant = Toast.ToastVariant.Warning;
+        _toast = "Order cancelled.";
+    }
+}

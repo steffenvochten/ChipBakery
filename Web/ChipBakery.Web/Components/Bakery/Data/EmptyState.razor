@@ -1,0 +1,39 @@
+@* Doodle illustration + Caveat headline + supporting copy + optional action. *@
+
+<div class="@($"flex flex-col items-center justify-center text-center py-12 px-6 {Class}".Trim())">
+    <div class="text-kraft mb-4 opacity-80" aria-hidden="true">
+        <Doodle Name="@Doodle" Class="@DoodleSize" />
+    </div>
+    <div class="display-hand text-3xl text-ink mb-2">@Headline</div>
+    @if (ChildContent is not null)
+    {
+        <div class="max-w-sm text-ink-muted">@ChildContent</div>
+    }
+    @if (Action is not null)
+    {
+        <div class="mt-6">@Action</div>
+    }
+</div>
+
+@code {
+    /// <summary>Sprite symbol id, e.g. "doodle-cookie".</summary>
+    [Parameter] public string Doodle { get; set; } = "doodle-cookie";
+
+    [Parameter, EditorRequired] public string Headline { get; set; } = "Nothing here yet";
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Optional CTA, typically a PaperButton.</summary>
+    [Parameter] public RenderFragment? Action { get; set; }
+
+    [Parameter] public BakerySize Size { get; set; } = BakerySize.Md;
+
+    [Parameter] public string Class { get; set; } = "";
+
+    private string DoodleSize => Size switch
+    {
+        BakerySize.Sm => "w-12 h-12",
+        BakerySize.Lg => "w-24 h-24",
+        _             => "w-16 h-16",
+    };
+}

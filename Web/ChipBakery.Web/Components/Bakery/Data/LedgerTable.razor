@@ -1,0 +1,146 @@
+@*
+   Generic ledger-style table. Wraps a kraft-tab header + ruled rows in a paper-surface card.
+
+   Usage:
+   <LedgerTable TItem="OrderDto" Items="@orders" RowKey="o => o.Id">
+       <Header>
+           <th>Order #</th>
+           <th>Customer</th>
+           <th class="text-right">Total</th>
+           <th>Status</th>
+       </Header>
+       <Row Context="o">
+           <td><code class="font-mono text-sm">@o.Id</code></td>
+           <td>@o.Customer</td>
+           <td class="text-right">@o.Total</td>
+           <td><StatusBadge StatusText="@o.Status" /></td>
+       </Row>
+   </LedgerTable>
+*@
+
+@typeparam TItem
+
+<div class="paper-surface overflow-hidden @Class">
+    @if (HeaderTitle is not null)
+    {
+        <div class="flex items-center gap-3 px-6 py-4 border-b" style="border-color: rgb(var(--ink) / 0.08);">
+            @if (HeaderGlyph is not null)
+            {
+                <Doodle Name="@HeaderGlyph" Class="w-5 h-5 text-kraft" ViewBox="0 0 32 32" />
+            }
+            <div class="font-serif font-bold text-lg text-ink flex-1">@HeaderTitle</div>
+            @HeaderActions
+        </div>
+    }
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            @if (Header is not null)
+            {
+                <thead>
+                    <tr class="kraft-row">
+                        @Header
+                    </tr>
+                </thead>
+            }
+            <tbody>
+                @if (Loading)
+                {
+                    @for (int i = 0; i < (PlaceholderRows ?? 4); i++)
+                    {
+                        <tr class="ruled-row">
+                            <td colspan="20" class="px-6 py-3">
+                                <div class="h-3 rounded-md animate-pulse"
+                                     style="background-color: rgb(var(--ink) / 0.08); width: @($"{(80 - (i * 9 % 35))}%");"></div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else if (Items is null || !Items.Any())
+                {
+                    <tr>
+                        <td colspan="20">
+                            @if (Empty is not null)
+                            {
+                                @Empty
+                            }
+                            else
+                            {
+                                <EmptyState Doodle="doodle-cookie" Headline="@(EmptyHeadline ?? "Nothing here yet")">
+                                    @EmptyBody
+                                </EmptyState>
+                            }
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in Items)
+                    {
+                        <tr class="ruled-row hover:bg-ink/5 transition-colors">
+                            @Row(item)
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Footer is not null)
+    {
+        <div class="px-6 py-3 border-t text-xs text-ink-muted" style="border-color: rgb(var(--ink) / 0.08);">
+            @Footer
+        </div>
+    }
+</div>
+
+<style>
+    .kraft-row > th {
+        padding: 0.65rem 1.5rem;
+        text-align: left;
+        font-family: 'DM Sans', system-ui, sans-serif;
+        font-weight: 700;
+        font-size: 0.7rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgb(var(--paper));
+        background-color: rgb(var(--kraft) / 0.92);
+    }
+    .kraft-row > th:first-child { border-top-left-radius: 0; }
+    .kraft-row > th:last-child  { border-top-right-radius: 0; }
+
+    .ruled-row > td {
+        padding: 0.85rem 1.5rem;
+        border-bottom: 1px dashed rgb(var(--ink) / 0.10);
+        color: rgb(var(--ink));
+        vertical-align: middle;
+    }
+    .ruled-row:last-child > td { border-bottom: none; }
+</style>
+
+@code {
+    [Parameter] public IEnumerable<TItem>? Items { get; set; }
+
+    [Parameter] public RenderFragment? Header { get; set; }
+
+    [Parameter, EditorRequired] public RenderFragment<TItem> Row { get; set; } = default!;
+
+    [Parameter] public RenderFragment? Empty { get; set; }
+    [Parameter] public string? EmptyHeadline { get; set; }
+    [Parameter] public RenderFragment? EmptyBody { get; set; }
+
+    /// <summary>Optional card-header title above the table (with glyph + actions).</summary>
+    [Parameter] public string? HeaderTitle { get; set; }
+    [Parameter] public string? HeaderGlyph { get; set; }
+    [Parameter] public RenderFragment? HeaderActions { get; set; }
+
+    /// <summary>Card-footer slot (e.g. row counts, totals).</summary>
+    [Parameter] public RenderFragment? Footer { get; set; }
+
+    [Parameter] public bool Loading { get; set; }
+
+    /// <summary>Number of skeleton rows when Loading. Defaults to 4.</summary>
+    [Parameter] public int? PlaceholderRows { get; set; }
+
+    [Parameter] public string Class { get; set; } = "";
+}

@@ -1,0 +1,26 @@
+@* Washi tape strip. Drop inside a `position: relative; overflow: visible` element.
+   Defaults to a top-centred horizontal strip; tweak via Top/Left/Width/Rotation. *@
+
+<div class="tape-strip @TapeClass"
+     style="@($"top:{Top}; left:{Left}; width:{Width}; transform:translateX({TranslateX}) rotate({Rotation}deg);")"
+     aria-hidden="true"></div>
+
+@code {
+    [Parameter] public TapeColor Color { get; set; } = TapeColor.Default;
+
+    /// <summary>CSS top offset, e.g. "-8px", "10%". Default: "-10px" (overhangs the card).</summary>
+    [Parameter] public string Top { get; set; } = "-10px";
+
+    /// <summary>CSS left offset; defaults to 50% with TranslateX="-50%" so the strip is centred.</summary>
+    [Parameter] public string Left { get; set; } = "50%";
+
+    [Parameter] public string TranslateX { get; set; } = "-50%";
+
+    /// <summary>CSS width, e.g. "120px", "40%".</summary>
+    [Parameter] public string Width { get; set; } = "110px";
+
+    /// <summary>Degrees of rotation; -3 to 3 looks natural.</summary>
+    [Parameter] public double Rotation { get; set; } = -2;
+
+    private string TapeClass => Color == TapeColor.Default ? "" : $"tape-strip-{Color.CssName()}";
+}

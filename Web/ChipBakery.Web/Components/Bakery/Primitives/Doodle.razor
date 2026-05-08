@@ -1,0 +1,32 @@
+@* Sprite-backed line illustration. Recolours via currentColor.
+   Usage: <Doodle Name="doodle-croissant" Class="w-12 h-12 text-chocolate" /> *@
+
+<svg class="@($"inline-block {Class}".Trim())"
+     style="@Style"
+     viewBox="@ViewBox"
+     fill="none"
+     role="@(Decorative ? "presentation" : "img")"
+     aria-hidden="@(Decorative ? "true" : null)"
+     aria-label="@(Decorative ? null : (Label ?? Name))"
+     focusable="false">
+    <use href="@($"/illustrations/sprite.svg#{Name}")" />
+</svg>
+
+@code {
+    /// <summary>Symbol id from sprite.svg, e.g. "doodle-croissant", "glyph-check".</summary>
+    [Parameter, EditorRequired] public string Name { get; set; } = default!;
+
+    /// <summary>Tailwind size + colour utilities, e.g. "w-8 h-8 text-chocolate".</summary>
+    [Parameter] public string Class { get; set; } = "w-6 h-6";
+
+    [Parameter] public string? Style { get; set; }
+
+    /// <summary>SVG viewBox; sprite symbols default to "0 0 32 32" or "0 0 24 24".</summary>
+    [Parameter] public string ViewBox { get; set; } = "0 0 32 32";
+
+    /// <summary>Optional accessible label. Ignored when Decorative=true.</summary>
+    [Parameter] public string? Label { get; set; }
+
+    /// <summary>True for purely decorative glyphs that screen readers should skip. Default true.</summary>
+    [Parameter] public bool Decorative { get; set; } = true;
+}

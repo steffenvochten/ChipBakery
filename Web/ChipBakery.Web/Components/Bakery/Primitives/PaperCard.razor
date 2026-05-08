@@ -1,0 +1,81 @@
+@* Recipe-card container — paper substrate with optional tape, torn bottom edge, and wobble. *@
+
+<div class="@CssClass"
+     style="@StyleAttr"
+     @attributes="AdditionalAttributes">
+    @if (Tape != TapeColor.Default || ShowTape)
+    {
+        <Tape Color="@Tape" Top="@TapeTop" Width="@TapeWidth" Rotation="@TapeRotation" />
+    }
+    @ChildContent
+    @if (Deckle != DeckleVariant.None)
+    {
+        <svg class="absolute left-0 right-0 -bottom-px w-full h-3 pointer-events-none"
+             viewBox="0 0 200 12"
+             preserveAspectRatio="none"
+             style="color: rgb(var(--paper-alt));"
+             aria-hidden="true">
+            <use href="@($"/illustrations/sprite.svg#{DeckleSymbol}")" />
+        </svg>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public RenderFragment ChildContent { get; set; } = default!;
+
+    /// <summary>Decorative tape colour. Set anything other than Default OR set ShowTape=true to render.</summary>
+    [Parameter] public TapeColor Tape { get; set; } = TapeColor.Default;
+
+    /// <summary>Force-render a default-colour tape (when you want the strip without picking a colour).</summary>
+    [Parameter] public bool ShowTape { get; set; }
+
+    [Parameter] public string TapeTop { get; set; } = "-10px";
+    [Parameter] public string TapeWidth { get; set; } = "110px";
+    [Parameter] public double TapeRotation { get; set; } = -2;
+
+    /// <summary>Torn-paper bottom edge. None = clean rectangle.</summary>
+    [Parameter] public DeckleVariant Deckle { get; set; } = DeckleVariant.None;
+
+    /// <summary>Stable key for deterministic wobble. Cards using polled data should pass an Id.</summary>
+    [Parameter] public object? RotateKey { get; set; }
+
+    /// <summary>Manual rotation override in degrees. Ignored when RotateKey is set.</summary>
+    [Parameter] public double? Rotation { get; set; }
+
+    /// <summary>Lift slightly on hover (gated on prefers-reduced-motion).</summary>
+    [Parameter] public bool Hoverable { get; set; }
+
+    /// <summary>Padding utilities. Default p-6.</summary>
+    [Parameter] public string Padding { get; set; } = "p-6";
+
+    [Parameter] public string Class { get; set; } = "";
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string CssClass
+    {
+        get
+        {
+            var parts = new List<string> { "paper-surface", "relative", Padding };
+            if (Hoverable) parts.Add("hover-lift");
+            if (RotateKey is not null) parts.Add(BakeryRandom.Wobble(RotateKey));
+            if (!string.IsNullOrWhiteSpace(Class)) parts.Add(Class);
+            return string.Join(' ', parts);
+        }
+    }
+
+    private string? StyleAttr =>
+        Rotation.HasValue && RotateKey is null
+            ? $"transform: rotate({Rotation.Value.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)}deg);"
+            : null;
+
+    private string DeckleSymbol => Deckle switch
+    {
+        DeckleVariant.V1 => "deckle-1",
+        DeckleVariant.V2 => "deckle-2",
+        DeckleVariant.V3 => "deckle-3",
+        DeckleVariant.V4 => "deckle-4",
+        _ => "deckle-1",
+    };
+}

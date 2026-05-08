@@ -1,0 +1,96 @@
+@* Paper-page modal with taped corners. Renders nothing when Open=false. *@
+
+@if (Open)
+{
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-up"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="@TitleId">
+        <div class="absolute inset-0"
+             style="background-color: rgb(var(--ink) / 0.45); backdrop-filter: blur(4px);"
+             @onclick="HandleBackdropClick"></div>
+
+        <div class="relative paper-surface @WidthClass shadow-deep"
+             style="background-color: rgb(var(--paper));"
+             @onclick:stopPropagation="true">
+
+            @* Taped top corners — purely decorative *@
+            <div class="tape-strip tape-strip-lemon"
+                 style="top:-12px; left:18px; width:86px; transform: rotate(-8deg);"
+                 aria-hidden="true"></div>
+            <div class="tape-strip tape-strip-raspberry"
+                 style="top:-12px; right:18px; width:86px; transform: rotate(6deg);"
+                 aria-hidden="true"></div>
+
+            <div class="px-7 pt-7 pb-3 flex items-start gap-4">
+                <div class="flex-1 min-w-0">
+                    @if (Eyebrow is not null)
+                    {
+                        <div class="display-hand text-lg text-kraft leading-none mb-1">@Eyebrow</div>
+                    }
+                    <h2 id="@TitleId" class="font-serif font-bold text-2xl text-ink leading-tight">@Title</h2>
+                </div>
+                @if (ShowClose)
+                {
+                    <button type="button"
+                            class="flex-shrink-0 -mt-1 -mr-1 w-9 h-9 rounded-full flex items-center justify-center hover:bg-ink/10 transition-colors text-ink"
+                            aria-label="Close"
+                            @onclick="HandleClose">
+                        <Doodle Name="glyph-x" Class="w-5 h-5" ViewBox="0 0 24 24" />
+                    </button>
+                }
+            </div>
+
+            <div class="px-7 pb-6">
+                @ChildContent
+            </div>
+
+            @if (Footer is not null)
+            {
+                <div class="px-7 pb-7 pt-2 flex items-center justify-end gap-3 border-t"
+                     style="border-color: rgb(var(--ink) / 0.08);">
+                    @Footer
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+
+    [Parameter, EditorRequired] public string Title { get; set; } = default!;
+    [Parameter] public string? Eyebrow { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? Footer { get; set; }
+
+    [Parameter] public bool ShowClose { get; set; } = true;
+    [Parameter] public bool CloseOnBackdrop { get; set; } = true;
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    /// <summary>Width preset: Sm = max-w-sm, Md = max-w-md, Lg = max-w-lg, Xl = max-w-2xl.</summary>
+    [Parameter] public string Size { get; set; } = "Md";
+
+    private readonly string TitleId = $"modal-title-{Guid.NewGuid():N}";
+
+    private string WidthClass => Size switch
+    {
+        "Sm" => "w-full max-w-sm",
+        "Lg" => "w-full max-w-lg",
+        "Xl" => "w-full max-w-2xl",
+        _    => "w-full max-w-md",
+    };
+
+    private async Task HandleBackdropClick()
+    {
+        if (CloseOnBackdrop) await HandleClose();
+    }
+
+    private async Task HandleClose()
+    {
+        if (OpenChanged.HasDelegate) await OpenChanged.InvokeAsync(false);
+        if (OnClose.HasDelegate)     await OnClose.InvokeAsync();
+    }
+}

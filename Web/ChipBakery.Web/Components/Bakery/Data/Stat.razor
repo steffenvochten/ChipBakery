@@ -1,0 +1,32 @@
+@* Chalkboard-style counter tile. Used in stats strips (e.g. Production dashboard). *@
+
+<div class="@($"chalkboard-surface p-5 flex items-start gap-4 {Class}".Trim())">
+    @if (!string.IsNullOrEmpty(Glyph))
+    {
+        <div class="flex-shrink-0 opacity-80">
+            <Doodle Name="@Glyph" Class="w-9 h-9" />
+        </div>
+    }
+    <div class="flex-1 min-w-0">
+        <div class="display-hand text-base opacity-80 leading-none mb-1">@Label</div>
+        <div class="font-serif font-bold text-3xl sm:text-4xl leading-none">@Value</div>
+        @if (Hint is not null)
+        {
+            <div class="text-xs opacity-70 mt-2">@Hint</div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = default!;
+
+    /// <summary>The headline value (string so callers can format).</summary>
+    [Parameter, EditorRequired] public string Value { get; set; } = default!;
+
+    /// <summary>Optional sprite glyph id, e.g. "glyph-fire".</summary>
+    [Parameter] public string? Glyph { get; set; }
+
+    [Parameter] public RenderFragment? Hint { get; set; }
+
+    [Parameter] public string Class { get; set; } = "";
+}

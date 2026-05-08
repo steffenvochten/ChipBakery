@@ -1,0 +1,112 @@
+@* Sticky-note style notification. Auto-dismisses after Duration (ms).
+   Pass an empty Message (or call Dismiss) to hide. *@
+
+@implements IDisposable
+
+@if (!string.IsNullOrEmpty(Message))
+{
+    <div class="fixed @PositionClass z-[200] animate-fade-up">
+        <div class="@ColorClass note-shadow"
+             style="@StyleAttr"
+             role="status"
+             aria-live="polite">
+            <div class="px-5 py-3.5 flex items-center gap-3 max-w-md">
+                @if (!string.IsNullOrEmpty(Glyph))
+                {
+                    <Doodle Name="@Glyph" Class="w-5 h-5 flex-shrink-0" ViewBox="0 0 24 24" />
+                }
+                <div class="flex-1 font-bold text-sm">@Message</div>
+                @if (Dismissable)
+                {
+                    <button type="button"
+                            class="flex-shrink-0 -mr-1 w-7 h-7 rounded-full flex items-center justify-center hover:bg-ink/10 transition-colors"
+                            aria-label="Dismiss"
+                            @onclick="HandleDismiss">
+                        <Doodle Name="glyph-x" Class="w-4 h-4" ViewBox="0 0 24 24" />
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    public enum ToastVariant { Success, Error, Info, Warning }
+
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public EventCallback<string?> MessageChanged { get; set; }
+
+    [Parameter] public ToastVariant Variant { get; set; } = ToastVariant.Success;
+
+    /// <summary>Auto-dismiss timeout in milliseconds. 0 disables auto-dismiss.</summary>
+    [Parameter] public int Duration { get; set; } = 3500;
+
+    [Parameter] public bool Dismissable { get; set; } = true;
+
+    /// <summary>Position: BottomCenter (default), TopCenter, BottomRight, TopRight.</summary>
+    [Parameter] public string Position { get; set; } = "BottomCenter";
+
+    private CancellationTokenSource? _cts;
+    private string? _last;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Message != _last)
+        {
+            _last = Message;
+            _cts?.Cancel();
+            _cts?.Dispose();
+
+            if (!string.IsNullOrEmpty(Message) && Duration > 0)
+            {
+                _cts = new CancellationTokenSource();
+                var token = _cts.Token;
+                try
+                {
+                    await Task.Delay(Duration, token);
+                    if (!token.IsCancellationRequested) await HandleDismiss();
+                }
+                catch (TaskCanceledException) { }
+            }
+        }
+    }
+
+    private async Task HandleDismiss()
+    {
+        _last = null;
+        if (MessageChanged.HasDelegate) await MessageChanged.InvokeAsync(null);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+    }
+
+    private string PositionClass => Position switch
+    {
+        "TopCenter"   => "top-6 left-1/2 -translate-x-1/2",
+        "BottomRight" => "bottom-6 right-6",
+        "TopRight"    => "top-6 right-6",
+        _             => "bottom-6 left-1/2 -translate-x-1/2",
+    };
+
+    private string Glyph => Variant switch
+    {
+        ToastVariant.Success => "glyph-check",
+        ToastVariant.Error   => "glyph-x",
+        ToastVariant.Warning => "glyph-clock",
+        _                    => "glyph-arrow-right",
+    };
+
+    private string ColorClass => "rounded-2xl";
+
+    private string StyleAttr => Variant switch
+    {
+        ToastVariant.Success => "background-color: rgb(var(--basil)); color: rgb(var(--paper));",
+        ToastVariant.Error   => "background-color: rgb(var(--raspberry)); color: rgb(var(--paper));",
+        ToastVariant.Warning => "background-color: rgb(var(--lemon)); color: rgb(var(--ink));",
+        _                    => "background-color: rgb(var(--blueberry)); color: rgb(var(--paper));",
+    };
+}

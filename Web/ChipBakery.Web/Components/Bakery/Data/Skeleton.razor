@@ -1,0 +1,40 @@
+@* Pencil-stroke loading placeholder. Use Lines for a stack of bars, or wrap children for a custom shape. *@
+
+@if (ChildContent is not null)
+{
+    <div class="@($"animate-pulse {Class}".Trim())" aria-hidden="true" role="status">
+        @ChildContent
+    </div>
+}
+else if (Variant == SkeletonVariant.Card)
+{
+    <div class="@($"paper-surface p-6 animate-pulse {Class}".Trim())" aria-hidden="true" role="status">
+        <div class="h-5 rounded-md mb-3" style="background-color: rgb(var(--ink) / 0.08); width:60%"></div>
+        <div class="h-3 rounded-md mb-2" style="background-color: rgb(var(--ink) / 0.06); width:90%"></div>
+        <div class="h-3 rounded-md mb-2" style="background-color: rgb(var(--ink) / 0.06); width:75%"></div>
+        <div class="h-3 rounded-md"      style="background-color: rgb(var(--ink) / 0.06); width:50%"></div>
+    </div>
+}
+else
+{
+    <div class="@($"animate-pulse {Class}".Trim())" aria-hidden="true" role="status">
+        @for (int i = 0; i < Lines; i++)
+        {
+            var w = 100 - (i * 12 % 50);
+            <div class="h-3 rounded-md mb-2" style="@($"background-color: rgb(var(--ink) / 0.07); width:{w}%")"></div>
+        }
+    </div>
+}
+
+@code {
+    public enum SkeletonVariant { Lines, Card }
+
+    [Parameter] public SkeletonVariant Variant { get; set; } = SkeletonVariant.Lines;
+
+    /// <summary>Number of placeholder lines (only used in Lines variant when ChildContent is null).</summary>
+    [Parameter] public int Lines { get; set; } = 4;
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [Parameter] public string Class { get; set; } = "";
+}

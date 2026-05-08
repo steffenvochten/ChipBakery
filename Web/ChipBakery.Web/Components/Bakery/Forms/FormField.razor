@@ -1,0 +1,44 @@
+@* Label + input wrapper with optional hint/error.
+   Use for any input — pass the actual <input> / <select> / etc. as ChildContent. *@
+
+<div class="@($"flex flex-col gap-1.5 {Class}".Trim())">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <label class="form-label" for="@For">
+            @Label
+            @if (Required)
+            {
+                <span class="text-raspberry ml-0.5" aria-hidden="true">*</span>
+            }
+        </label>
+    }
+    @ChildContent
+    @if (!string.IsNullOrEmpty(Error))
+    {
+        <div class="text-xs text-raspberry font-bold mt-0.5" role="alert">
+            @Error
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(Hint))
+    {
+        <div class="text-xs text-ink-muted mt-0.5">
+            @Hint
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public RenderFragment ChildContent { get; set; } = default!;
+
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string? For { get; set; }
+    [Parameter] public bool Required { get; set; }
+
+    /// <summary>Short hint text below the input. Hidden when Error is set.</summary>
+    [Parameter] public string? Hint { get; set; }
+
+    /// <summary>Error message — overrides Hint and gets role="alert".</summary>
+    [Parameter] public string? Error { get; set; }
+
+    [Parameter] public string Class { get; set; } = "";
+}

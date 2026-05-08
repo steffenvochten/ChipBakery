@@ -1,0 +1,36 @@
+@* Date input styled like a date stamp on a recipe card.
+   Two-way bound via Value / ValueChanged. *@
+
+<div class="inline-flex items-center gap-2 paper-surface px-3 py-2"
+     style="border: 2px dashed rgb(var(--ink) / 0.25);">
+    <Doodle Name="utensil-timer" Class="w-4 h-4 text-kraft" ViewBox="0 0 32 32" />
+    <input type="date"
+           class="bg-transparent border-0 focus:outline-none font-mono text-sm text-ink"
+           value="@FormattedValue"
+           min="@(Min?.ToString("yyyy-MM-dd"))"
+           max="@(Max?.ToString("yyyy-MM-dd"))"
+           @onchange="HandleChange" />
+</div>
+
+@code {
+    [Parameter] public DateOnly? Value { get; set; }
+    [Parameter] public EventCallback<DateOnly?> ValueChanged { get; set; }
+
+    [Parameter] public DateOnly? Min { get; set; }
+    [Parameter] public DateOnly? Max { get; set; }
+
+    private string FormattedValue => Value?.ToString("yyyy-MM-dd") ?? "";
+
+    private async Task HandleChange(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString();
+        DateOnly? parsed = string.IsNullOrWhiteSpace(raw)
+            ? null
+            : (DateOnly.TryParse(raw, out var d) ? d : null);
+        if (parsed != Value)
+        {
+            Value = parsed;
+            if (ValueChanged.HasDelegate) await ValueChanged.InvokeAsync(parsed);
+        }
+    }
+}

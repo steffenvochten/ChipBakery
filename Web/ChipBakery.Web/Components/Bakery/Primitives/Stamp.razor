@@ -1,0 +1,48 @@
+@* Rubber-stamp text effect — bordered uppercase pill in Caveat. Used by StatusBadge.
+   For a more structured status display use <StatusBadge Status="..." /> instead. *@
+
+<span class="@CssClass"
+      style="@StyleAttr"
+      @attributes="AdditionalAttributes">
+    @if (!string.IsNullOrEmpty(Glyph))
+    {
+        <Doodle Name="@Glyph" Class="w-3.5 h-3.5 mr-1 -ml-0.5" ViewBox="0 0 24 24" />
+    }
+    @ChildContent
+</span>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [Parameter] public BakeryColor Color { get; set; } = BakeryColor.Chocolate;
+
+    /// <summary>Optional sprite glyph rendered before the text, e.g. "glyph-fire".</summary>
+    [Parameter] public string? Glyph { get; set; }
+
+    /// <summary>Stable key for deterministic rotation. Null = no rotation.</summary>
+    [Parameter] public object? RotateKey { get; set; }
+
+    /// <summary>Manual override for rotation degrees, e.g. -3.5. Ignored when RotateKey is set.</summary>
+    [Parameter] public double? Rotation { get; set; }
+
+    [Parameter] public string Class { get; set; } = "";
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string CssClass => $"stamp stamp-{Color.CssName()} {Class}".Trim();
+
+    private string? StyleAttr
+    {
+        get
+        {
+            double? deg = Rotation;
+            if (deg is null && RotateKey is not null)
+            {
+                int seed = BakeryRandom.RotationSeed(RotateKey);
+                deg = -3 + (seed * 1.0); // -3 .. +3 deg
+            }
+            return deg is null ? null : $"transform: rotate({deg.Value.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)}deg);";
+        }
+    }
+}

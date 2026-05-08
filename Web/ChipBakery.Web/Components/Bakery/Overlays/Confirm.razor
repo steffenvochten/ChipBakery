@@ -1,0 +1,50 @@
+@* Destructive-action confirmation dialog. Wraps RecipeModal with Confirm + Cancel buttons. *@
+
+<RecipeModal Open="@Open"
+             OpenChanged="@OpenChanged"
+             Title="@Title"
+             Eyebrow="@Eyebrow"
+             Size="Sm"
+             ShowClose="false"
+             CloseOnBackdrop="false">
+    <ChildContent>
+        <div class="text-ink-muted">
+            @ChildContent
+        </div>
+    </ChildContent>
+    <Footer>
+        <PaperButton Variant="ButtonVariant.Ghost" OnClick="HandleCancel">@CancelLabel</PaperButton>
+        <PaperButton Variant="@ConfirmVariant" Loading="@Busy" OnClick="HandleConfirm">@ConfirmLabel</PaperButton>
+    </Footer>
+</RecipeModal>
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+
+    [Parameter, EditorRequired] public string Title { get; set; } = default!;
+    [Parameter] public string? Eyebrow { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [Parameter] public string ConfirmLabel { get; set; } = "Confirm";
+    [Parameter] public string CancelLabel { get; set; } = "Cancel";
+
+    [Parameter] public ButtonVariant ConfirmVariant { get; set; } = ButtonVariant.Danger;
+
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    /// <summary>Show a spinner on the confirm button (set true while async work runs).</summary>
+    [Parameter] public bool Busy { get; set; }
+
+    private async Task HandleConfirm()
+    {
+        if (OnConfirm.HasDelegate) await OnConfirm.InvokeAsync();
+    }
+
+    private async Task HandleCancel()
+    {
+        if (OnCancel.HasDelegate) await OnCancel.InvokeAsync();
+        if (OpenChanged.HasDelegate) await OpenChanged.InvokeAsync(false);
+    }
+}

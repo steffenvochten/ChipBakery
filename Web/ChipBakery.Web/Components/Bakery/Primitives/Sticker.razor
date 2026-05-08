@@ -1,0 +1,44 @@
+@* Slightly rotated container with a soft offset shadow — like a sticker stuck on paper.
+   Rotation is deterministic from RotateKey so polling refreshes don't reshuffle. *@
+
+<div class="@CssClass"
+     style="@Style"
+     @attributes="AdditionalAttributes">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Stable key (typically an entity id) for deterministic rotation. Null = no wobble.</summary>
+    [Parameter] public object? RotateKey { get; set; }
+
+    /// <summary>Override wobble explicitly. Ignored when RotateKey is set.</summary>
+    [Parameter] public int? WobbleIndex { get; set; }
+
+    /// <summary>Add a sticker-style offset shadow.</summary>
+    [Parameter] public bool Shadow { get; set; } = true;
+
+    /// <summary>Extra utility classes.</summary>
+    [Parameter] public string Class { get; set; } = "";
+
+    [Parameter] public string? Style { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string CssClass
+    {
+        get
+        {
+            var parts = new List<string>(4) { "inline-block" };
+            if (Shadow) parts.Add("note-shadow");
+
+            int? idx = WobbleIndex ?? (RotateKey is null ? (int?)null : BakeryRandom.RotationSeed(RotateKey));
+            if (idx.HasValue) parts.Add($"wobble-{idx.Value}");
+
+            if (!string.IsNullOrWhiteSpace(Class)) parts.Add(Class);
+            return string.Join(' ', parts);
+        }
+    }
+}
