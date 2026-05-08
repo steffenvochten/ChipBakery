@@ -2,9 +2,10 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using Catalog.Application.Interfaces;
 using ChipBakery.Shared;
+using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging;
 
-namespace Catalog.Infrastructure.Clients;
+namespace Catalog.Application.Services;
 
 public class CatalogService(
     IHttpClientFactory httpClientFactory,
@@ -22,10 +23,6 @@ public class CatalogService(
             var newIngredientNames = new List<string>();
             foreach (var ing in request.Ingredients)
             {
-                // Simple approach: try to create. Warehouse service should handle duplicates or we check first.
-                // For this implementation, we'll assume the Warehouse handles "upsert" or we just POST and ignore 409/Conflict if it exists.
-                // Better: Warehouse has a GET /api/warehouse. We check names.
-                
                 var existingItems = await warehouseClient.GetFromJsonAsync<List<WarehouseItem>>("/api/warehouse", ct) ?? [];
                 if (!existingItems.Any(i => i.Name.Equals(ing.Name, StringComparison.OrdinalIgnoreCase)))
                 {
@@ -74,8 +71,6 @@ public class CatalogService(
             if (newIngredientNames.Count > 0)
             {
                 logger.LogInformation("Requesting auto-generated supplier for: {Ingredients}", string.Join(", ", newIngredientNames));
-                // We'll group them into one supplier for simplicity or one per ingredient? 
-                // Let's do one supplier that handles all new ingredients from this recipe.
                 var agentReq = new { Ingredients = newIngredientNames };
                 await agentsClient.PostAsJsonAsync("/api/agents/suppliers/auto", agentReq, ct);
             }

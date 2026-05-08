@@ -1,26 +1,25 @@
 using System.Text;
 using System.Text.Json;
 using ChipBakery.Shared;
-using Production.Application.DTOs;
-using Production.Application.Interfaces;
+using Inventory.Application.Interfaces;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-namespace Production.Service.Messaging;
+namespace Inventory.Service.Messaging;
 
-public class OrderPlacedConsumer : BackgroundService
+public class JobCompletedConsumer : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly ILogger<OrderPlacedConsumer> _logger;
+    private readonly ILogger<JobCompletedConsumer> _logger;
     private readonly IConnection _connection;
     private IChannel? _channel;
     private string? _queueName;
 
     private const string ExchangeName = "chipbakery-exchange";
 
-    public OrderPlacedConsumer(
+    public JobCompletedConsumer(
         IServiceProvider serviceProvider,
-        ILogger<OrderPlacedConsumer> logger,
+        ILogger<JobCompletedConsumer> logger,
         IConnection connection)
     {
         _serviceProvider = serviceProvider;
@@ -33,24 +32,24 @@ public class OrderPlacedConsumer : BackgroundService
         _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
         await _channel.ExchangeDeclareAsync(
-            exchange: ExchangeName, 
-            type: ExchangeType.Topic, 
+            exchange: ExchangeName,
+            type: ExchangeType.Topic,
             durable: true,
             cancellationToken: stoppingToken);
 
         var declareResult = await _channel.QueueDeclareAsync(
-            queue: "production-order-placed", 
-            durable: true, 
-            exclusive: false, 
+            queue: "inventory-job-completed",
+            durable: true,
+            exclusive: false,
             autoDelete: false,
             cancellationToken: stoppingToken);
-        
+
         _queueName = declareResult.QueueName;
 
         await _channel.QueueBindAsync(
-            queue: _queueName, 
-            exchange: ExchangeName, 
-            routingKey: "OrderPlacedEvent",
+            queue: _queueName,
+            exchange: ExchangeName,
+            routingKey: "JobCompletedEvent",
             cancellationToken: stoppingToken);
 
         var consumer = new AsyncEventingBasicConsumer(_channel);
@@ -58,38 +57,36 @@ public class OrderPlacedConsumer : BackgroundService
         {
             var body = ea.Body.ToArray();
             var message = Encoding.UTF8.GetString(body);
-            
-            try 
+
+            try
             {
-                var @event = JsonSerializer.Deserialize<OrderPlacedEvent>(message);
+                var @event = JsonSerializer.Deserialize<JobCompletedEvent>(message);
                 if (@event != null)
                 {
-                    _logger.LogInformation("Received OrderPlacedEvent for Order {OrderId}", @event.OrderId);
-                    
+                    _logger.LogInformation("Received JobCompletedEvent for Job {JobId}. Restocking Product {ProductId} x{Quantity}", 
+                        @event.JobId, @event.ProductId, @event.Quantity);
+
                     using var scope = _serviceProvider.CreateScope();
-                    var bakingService = scope.ServiceProvider.GetRequiredService<IBakingService>();
-                    
-                    await bakingService.ScheduleJobAsync(new ScheduleBakingJobRequest(
-                        @event.ProductId,
-                        @event.Quantity,
-                        @event.OrderId), stoppingToken);
+                    var inventoryService = scope.ServiceProvider.GetRequiredService<IInventoryService>();
+
+                    await inventoryService.RestockAsync(@event.ProductId, (int)@event.Quantity, stoppingToken);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing OrderPlacedEvent");
+                _logger.LogError(ex, "Error processing JobCompletedEvent");
             }
 
             await _channel.BasicAckAsync(ea.DeliveryTag, false, stoppingToken);
         };
 
         await _channel.BasicConsumeAsync(
-            queue: _queueName, 
-            autoAck: false, 
+            queue: _queueName,
+            autoAck: false,
             consumer: consumer,
             cancellationToken: stoppingToken);
 
-        _logger.LogInformation("OrderPlacedConsumer started and listening on {QueueName}", _queueName);
+        _logger.LogInformation("JobCompletedConsumer started and listening on {QueueName}", _queueName);
 
         while (!stoppingToken.IsCancellationRequested)
         {

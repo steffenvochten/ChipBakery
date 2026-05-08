@@ -5,6 +5,8 @@ namespace Warehouse.Domain.Interfaces;
 public interface IWarehouseRepository
 {
     Task<WarehouseItem?> GetByIdAsync(Guid id, CancellationToken ct = default);
+    Task<WarehouseItem?> GetByNameAsync(string name, CancellationToken ct = default);
+    Task<List<WarehouseItem>> GetByNamesAsync(List<string> names, CancellationToken ct = default);
     Task<List<WarehouseItem>> GetAllAsync(CancellationToken ct = default);
     Task AddAsync(WarehouseItem item, CancellationToken ct = default);
     void Update(WarehouseItem item);

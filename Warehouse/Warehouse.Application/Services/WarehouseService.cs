@@ -112,7 +112,8 @@ public class WarehouseService(
             return new RecipeCheckResponse(true, "No recipe defined for this product, allowing order.");
         }
 
-        var items = await repository.GetAllAsync(ct);
+        var ingredientNames = recipe.Ingredients.Select(i => i.IngredientName).ToList();
+        var items = await repository.GetByNamesAsync(ingredientNames, ct);
 
         foreach (var ingredient in recipe.Ingredients)
         {
@@ -139,7 +140,8 @@ public class WarehouseService(
             return new ConsumeRecipeResponse(true, Message: "No recipe defined for this product, nothing to consume.");
         }
 
-        var items = await repository.GetAllAsync(ct);
+        var ingredientNames = recipe.Ingredients.Select(i => i.IngredientName).ToList();
+        var items = await repository.GetByNamesAsync(ingredientNames, ct);
 
         // Two-pass: first verify everything is available, then deduct atomically.
         // Avoids partial deductions when a later ingredient is short.
@@ -162,6 +164,8 @@ public class WarehouseService(
             }
         }
 
+        var deductedEvents = new List<StockDeductedEvent>();
+
         foreach (var ingredient in recipe.Ingredients)
         {
             var needed = ingredient.QuantityRequired * request.Quantity;
@@ -170,10 +174,16 @@ public class WarehouseService(
 
             item.Quantity -= needed;
             repository.Update(item);
-            await eventPublisher.PublishAsync(new StockDeductedEvent(item.Id, needed, item.Quantity), ct);
+            deductedEvents.Add(new StockDeductedEvent(item.Id, needed, item.Quantity));
         }
 
         await repository.SaveChangesAsync(ct);
+
+        foreach (var @event in deductedEvents)
+        {
+            await eventPublisher.PublishAsync(@event, ct);
+        }
+
         logger.LogInformation(
             "Consumed recipe for product {ProductId} x{Quantity} ({IngredientCount} ingredients deducted)",
             request.ProductId, request.Quantity, recipe.Ingredients.Count);

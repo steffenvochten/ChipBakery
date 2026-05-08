@@ -3,6 +3,7 @@ using Inventory.Infrastructure;
 using Inventory.Service.Endpoints;
 using Inventory.Service.Extensions;
 using Inventory.Service.Middleware;
+using Inventory.Service.Messaging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,9 @@ builder.AddInfrastructure();
 
 // Application: InventoryService, FluentValidation validators
 builder.Services.AddApplication();
+
+// Messaging Consumers
+builder.Services.AddHostedService<JobCompletedConsumer>();
 
 // ProblemDetails support for RFC 7807-compliant error responses
 builder.Services.AddProblemDetails();

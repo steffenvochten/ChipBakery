@@ -29,4 +29,16 @@ public interface IOrderService
     /// Throws <see cref="System.InvalidOperationException"/> if the order is not in a cancellable state.
     /// </summary>
     Task<OrderDto> CancelOrderAsync(Guid id, CancellationToken ct = default);
+
+    /// <summary>
+    /// Transitions an order status to Processing.
+    /// Called when the corresponding baking job starts.
+    /// </summary>
+    Task StartOrderProcessingAsync(Guid id, CancellationToken ct = default);
+
+    /// <summary>
+    /// Transitions an order status to Completed.
+    /// Typically called by messaging consumers after a baking job finishes.
+    /// </summary>
+    Task CompleteOrderAsync(Guid id, CancellationToken ct = default);
 }

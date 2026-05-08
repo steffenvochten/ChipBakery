@@ -20,7 +20,7 @@ public class BakingService(
     {
         var jobs = await repository.GetAllAsync();
         return jobs
-            .Select(j => new BakingJobDto(j.Id, j.ProductId, j.Quantity, j.Status, j.StartTime, j.EndTime))
+            .Select(j => new BakingJobDto(j.Id, j.ProductId, j.OrderId, j.Quantity, j.Status, j.StartTime, j.EndTime))
             .ToList();
     }
 
@@ -32,16 +32,17 @@ public class BakingService(
         {
             Id = Guid.NewGuid(),
             ProductId = request.ProductId,
+            OrderId = request.OrderId,
             Quantity = request.Quantity,
             Status = BakingJobStatus.Scheduled
         };
 
         await repository.AddAsync(job);
-        logger.LogInformation("Scheduled baking job {JobId} for product {ProductId}", job.Id, request.ProductId);
+        logger.LogInformation("Scheduled baking job {JobId} for product {ProductId} (Order: {OrderId})", job.Id, request.ProductId, job.OrderId);
 
         await trackingService.UpdateJobStatusAsync(job.Id, job.Status);
 
-        return new BakingJobDto(job.Id, job.ProductId, job.Quantity, job.Status, job.StartTime, job.EndTime);
+        return new BakingJobDto(job.Id, job.ProductId, job.OrderId, job.Quantity, job.Status, job.StartTime, job.EndTime);
     }
 
     /// <summary>
@@ -101,7 +102,14 @@ public class BakingService(
         await repository.UpdateAsync(job);
         await trackingService.UpdateJobStatusAsync(job.Id, job.Status);
 
-        logger.LogInformation("Started baking job {JobId}", job.Id);
+        logger.LogInformation("Started baking job {JobId} for Order {OrderId}", job.Id, job.OrderId);
+        
+        await publisher.PublishAsync(new JobStartedEvent(
+            job.Id,
+            job.ProductId,
+            job.OrderId,
+            job.StartTime.Value), ct);
+
         return true;
     }
 
@@ -128,20 +136,19 @@ public class BakingService(
         job.EndTime = DateTime.UtcNow;
         await repository.UpdateAsync(job);
 
-        logger.LogInformation("Completed baking job {JobId}", jobId);
+        logger.LogInformation("Completed baking job {JobId} for Order {OrderId}", jobId, job.OrderId);
         await trackingService.UpdateJobStatusAsync(jobId, job.Status);
 
         await publisher.PublishAsync(
-            new JobCompletedEvent(job.Id, job.ProductId, job.Quantity, DateTime.UtcNow),
+            new JobCompletedEvent(job.Id, job.ProductId, job.OrderId, job.Quantity, DateTime.UtcNow),
             ct);
     }
 
     public async Task<List<BakingJobDto>> GetJobsByStatusAsync(string status, CancellationToken ct = default)
     {
-        var jobs = await repository.GetAllAsync();
+        var jobs = await repository.GetByStatusAsync(status);
         return jobs
-            .Where(j => string.Equals(j.Status, status, StringComparison.OrdinalIgnoreCase))
-            .Select(j => new BakingJobDto(j.Id, j.ProductId, j.Quantity, j.Status, j.StartTime, j.EndTime))
+            .Select(j => new BakingJobDto(j.Id, j.ProductId, j.OrderId, j.Quantity, j.Status, j.StartTime, j.EndTime))
             .ToList();
     }
 }

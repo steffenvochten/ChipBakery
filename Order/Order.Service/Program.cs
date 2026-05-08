@@ -3,6 +3,7 @@ using Order.Infrastructure;
 using Order.Service.Endpoints;
 using Order.Service.Extensions;
 using Order.Service.Middleware;
+using Order.Service.Messaging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,9 @@ builder.AddInfrastructure();
 
 // Application: OrderService, FluentValidation validators
 builder.Services.AddApplication();
+
+// Messaging Consumers
+builder.Services.AddHostedService<JobEventConsumer>();
 
 // ProblemDetails support for RFC 7807-compliant error responses
 builder.Services.AddProblemDetails();

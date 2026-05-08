@@ -1,6 +1,5 @@
 using ChipBakery.Shared;
 using Loyalty.Domain.Interfaces;
-using Loyalty.Infrastructure.Events;
 using Loyalty.Infrastructure.Persistence;
 using Loyalty.Infrastructure.Persistence.Repositories;
 using Microsoft.Extensions.DependencyInjection;

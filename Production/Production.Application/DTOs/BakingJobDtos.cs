@@ -3,6 +3,7 @@ namespace Production.Application.DTOs;
 public record BakingJobDto(
     Guid Id, 
     Guid ProductId, 
+    Guid? OrderId,
     decimal Quantity, 
     string Status,
     DateTime? StartTime,
@@ -10,4 +11,5 @@ public record BakingJobDto(
 
 public record ScheduleBakingJobRequest(
     Guid ProductId, 
-    decimal Quantity);
+    decimal Quantity,
+    Guid? OrderId = null);

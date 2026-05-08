@@ -2,7 +2,6 @@ using ChipBakery.Shared;
 using Production.Application.Interfaces;
 using Production.Domain.Interfaces;
 using Production.Infrastructure.Clients;
-using Production.Infrastructure.Events;
 using Production.Infrastructure.Persistence;
 using Production.Infrastructure.Persistence.Repositories;
 using Production.Infrastructure.Services;

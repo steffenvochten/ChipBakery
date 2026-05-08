@@ -4,7 +4,6 @@ using Microsoft.Extensions.Hosting;
 using Order.Application.Interfaces;
 using Order.Domain.Interfaces;
 using Order.Infrastructure.Clients;
-using Order.Infrastructure.Events;
 using Order.Infrastructure.Persistence;
 using Order.Infrastructure.Persistence.Repositories;
 

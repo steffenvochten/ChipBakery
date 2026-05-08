@@ -9,6 +9,14 @@ public class WarehouseItemRepository(WarehouseDbContext context) : IWarehouseRep
     public async Task<WarehouseItem?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
         await context.Items.FindAsync([id], ct);
 
+    public async Task<WarehouseItem?> GetByNameAsync(string name, CancellationToken ct = default) =>
+        await context.Items.FirstOrDefaultAsync(i => i.Name == name, ct);
+
+    public async Task<List<WarehouseItem>> GetByNamesAsync(List<string> names, CancellationToken ct = default) =>
+        await context.Items
+            .Where(i => names.Contains(i.Name))
+            .ToListAsync(ct);
+
     public async Task<List<WarehouseItem>> GetAllAsync(CancellationToken ct = default) =>
         await context.Items.AsNoTracking().ToListAsync(ct);
 

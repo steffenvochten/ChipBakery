@@ -1,6 +1,5 @@
 using ChipBakery.Shared;
 using Supplier.Domain.Interfaces;
-using Supplier.Infrastructure.Events;
 using Supplier.Infrastructure.Persistence;
 using Supplier.Infrastructure.Persistence.Repositories;
 using Microsoft.Extensions.DependencyInjection;

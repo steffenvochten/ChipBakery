@@ -23,6 +23,13 @@ public class BakingJobRepository : IBakingJobRepository
         return await _context.BakingJobs.ToListAsync();
     }
 
+    public async Task<IEnumerable<BakingJob>> GetByStatusAsync(string status)
+    {
+        return await _context.BakingJobs
+            .Where(j => j.Status == status)
+            .ToListAsync();
+    }
+
     public async Task AddAsync(BakingJob job)
     {
         await _context.BakingJobs.AddAsync(job);

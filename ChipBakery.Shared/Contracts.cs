@@ -147,12 +147,22 @@ public record OrderCancelledEvent(
     DateTime CancelledAt);
 
 /// <summary>
+/// Published by Production.Service when a baking job starts.
+/// </summary>
+public record JobStartedEvent(
+    Guid JobId,
+    Guid ProductId,
+    Guid? OrderId,
+    DateTime StartedAt);
+
+/// <summary>
 /// Published by Production.Service when a baking job has finished.
 /// Consumed by Loyalty.Service to award bonus points.
 /// </summary>
 public record JobCompletedEvent(
     Guid JobId,
     Guid ProductId,
+    Guid? OrderId,
     decimal Quantity,
     DateTime CompletedAt);
 

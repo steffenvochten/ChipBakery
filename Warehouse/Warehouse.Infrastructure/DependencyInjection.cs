@@ -2,7 +2,6 @@ using ChipBakery.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Warehouse.Domain.Interfaces;
-using Warehouse.Infrastructure.Events;
 using Warehouse.Infrastructure.Persistence;
 using Warehouse.Infrastructure.Persistence.Repositories;
 

@@ -65,10 +65,12 @@ app.MapPost("/api/agents/suppliers/auto", async (
 
     var response = await brain.ThinkAsync("You are a helpful assistant.", prompt, ct);
     
-    // Simple parsing
-    var lines = response.Split('\n');
-    var name = lines.FirstOrDefault(l => l.StartsWith("NAME:"))?.Replace("NAME:", "").Trim() ?? $"Supplier of {request.Ingredients[0]}";
-    var systemPrompt = lines.FirstOrDefault(l => l.StartsWith("PROMPT:"))?.Replace("PROMPT:", "").Trim() ?? $"Supplies {ingredientList}.";
+    // Robust parsing using Regex to handle conversational filler
+    var nameMatch = System.Text.RegularExpressions.Regex.Match(response, @"NAME:\s*(.*)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    var promptMatch = System.Text.RegularExpressions.Regex.Match(response, @"PROMPT:\s*(.*)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+    var name = nameMatch.Success ? nameMatch.Groups[1].Value.Trim() : $"Supplier of {request.Ingredients[0]}";
+    var systemPrompt = promptMatch.Success ? promptMatch.Groups[1].Value.Trim() : $"Supplies {ingredientList}.";
 
     var persona = new SupplierPersona(
         name,

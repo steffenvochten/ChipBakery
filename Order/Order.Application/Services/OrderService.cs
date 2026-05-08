@@ -142,4 +142,42 @@ public class OrderService : IOrderService
 
         return order.ToDto();
     }
+
+    /// <inheritdoc/>
+    public async Task StartOrderProcessingAsync(Guid id, CancellationToken ct = default)
+    {
+        var order = await _repository.GetByIdAsync(id, ct);
+        if (order == null)
+        {
+            _logger.LogWarning("Cannot start processing: Order {OrderId} not found", id);
+            return;
+        }
+
+        if (order.Status != OrderStatus.Placed) return;
+
+        order.Status = OrderStatus.Processing;
+        _repository.Update(order);
+        await _repository.SaveChangesAsync(ct);
+        
+        _logger.LogInformation("Order {OrderId} is now Processing.", id);
+    }
+
+    /// <inheritdoc/>
+    public async Task CompleteOrderAsync(Guid id, CancellationToken ct = default)
+    {
+        var order = await _repository.GetByIdAsync(id, ct);
+        if (order == null)
+        {
+            _logger.LogWarning("Cannot complete: Order {OrderId} not found", id);
+            return;
+        }
+
+        if (order.Status == OrderStatus.Completed) return;
+
+        order.Status = OrderStatus.Completed;
+        _repository.Update(order);
+        await _repository.SaveChangesAsync(ct);
+
+        _logger.LogInformation("Order {OrderId} is now Completed.", id);
+    }
 }

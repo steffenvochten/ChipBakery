@@ -1,5 +1,5 @@
 using Catalog.Application.Interfaces;
-using Catalog.Infrastructure.Clients;
+using Catalog.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Catalog.Infrastructure;
