@@ -4,40 +4,51 @@
 @implements IDisposable
 
 <div class="min-h-screen flex flex-col">
-    <header class="sticky top-0 z-50 py-4 px-4 sm:px-8">
-        <div class="max-w-6xl mx-auto">
-            <div class="glass-card px-6 py-2">
-                <NavMenu />
+    <header class="sticky top-0 z-40">
+        <div class="chalkboard-surface mx-3 sm:mx-6 mt-3 sm:mt-4 px-4 sm:px-6 py-3 shadow-deep rounded-2xl">
+            <div class="max-w-7xl mx-auto">
+                <NavMenu OnMobileToggle="ToggleDrawer" />
             </div>
         </div>
     </header>
 
     <main class="flex-1 py-8 sm:py-12">
-        <div class="max-w-6xl mx-auto px-4 sm:px-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6">
             @Body
         </div>
     </main>
 
-    <footer class="py-12 border-t border-bakery-crust/5">
-        <div class="max-w-6xl mx-auto px-8 text-center">
-            <p class="text-stone-400 dark:text-stone-600 text-sm font-medium">
-                &copy; @DateTime.Now.Year Chip Bakery. <span class="italic">Artisanal Excellence since 2024.</span>
-            </p>
+    <footer class="py-10 mt-12 border-t" style="border-color: rgb(var(--ink) / 0.08);">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-ink-muted">
+            <div class="flex items-center gap-3">
+                <Doodle Name="deco-wheat" Class="w-5 h-5" />
+                <span class="display-hand text-lg leading-none">made with butter and time</span>
+            </div>
+            <div class="text-sm">
+                &copy; @DateTime.Now.Year ChipBakery
+                <span class="opacity-70">— artisanal since 2024</span>
+            </div>
         </div>
     </footer>
 </div>
+
+<MobileDrawer Open="_drawerOpen" OpenChanged="@(b => _drawerOpen = b)" />
 
 <div id="blazor-error-ui" data-nosnippet>
     <div class="flex items-center justify-between gap-4">
         <span>An unhandled error has occurred.</span>
         <div class="flex items-center gap-3">
             <a href="." class="underline font-bold">Reload</a>
-            <span class="dismiss text-xl">🗙</span>
+            <span class="dismiss text-xl">&times;</span>
         </div>
     </div>
 </div>
 
 @code {
+    private bool _drawerOpen;
+
+    private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && !TzService.IsInitialized)

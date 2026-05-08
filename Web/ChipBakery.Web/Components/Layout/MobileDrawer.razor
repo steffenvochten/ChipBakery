@@ -1,0 +1,101 @@
+@* Slide-out drawer for mobile navigation. Hidden on lg+. *@
+
+@if (Open)
+{
+    <div class="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
+        <div class="absolute inset-0"
+             style="background-color: rgb(var(--ink) / 0.5); backdrop-filter: blur(3px);"
+             @onclick="Close"></div>
+
+        <aside class="absolute right-0 top-0 bottom-0 w-72 max-w-[85vw] paper-surface rounded-l-3xl rounded-r-none p-6 flex flex-col shadow-deep animate-fade-up"
+               style="background-color: rgb(var(--paper));">
+
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center gap-2">
+                    <Doodle Name="deco-wheat" Class="w-6 h-6 text-chocolate" />
+                    <span class="display-hand text-2xl text-ink leading-none">ChipBakery</span>
+                </div>
+                <button type="button"
+                        class="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-ink/10 transition-colors text-ink"
+                        aria-label="Close menu"
+                        @onclick="Close">
+                    <Doodle Name="glyph-x" Class="w-5 h-5" ViewBox="0 0 24 24" />
+                </button>
+            </div>
+
+            <nav class="flex flex-col gap-1 flex-1">
+                @foreach (var (href, label, accent) in _items)
+                {
+                    <NavLink href="@href"
+                             Match="@(href == "" ? NavLinkMatch.All : NavLinkMatch.Prefix)"
+                             class="@LinkClass(accent)"
+                             @onclick="Close">
+                        <span class="font-serif font-bold text-lg">@label</span>
+                        <Doodle Name="glyph-arrow-right" Class="w-4 h-4 ml-auto opacity-50" ViewBox="0 0 24 24" />
+                    </NavLink>
+                }
+            </nav>
+
+            <div class="pt-6 mt-6 border-t flex items-center justify-between text-ink-muted"
+                 style="border-color: rgb(var(--ink) / 0.1);">
+                <span class="display-hand text-base">made with butter</span>
+                <button class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-ink/10 transition-colors"
+                        onclick="toggleTheme()"
+                        title="Toggle theme"
+                        aria-label="Toggle theme">
+                    <span class="block dark:hidden">
+                        <Doodle Name="glyph-sun" Class="w-5 h-5" ViewBox="0 0 24 24" />
+                    </span>
+                    <span class="hidden dark:block">
+                        <Doodle Name="glyph-moon" Class="w-5 h-5" ViewBox="0 0 24 24" />
+                    </span>
+                </button>
+            </div>
+        </aside>
+    </div>
+}
+
+<style>
+    .drawer-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.7rem 0.9rem;
+        border-radius: 0.875rem;
+        color: rgb(var(--ink));
+        opacity: 0.85;
+        transition: background-color 150ms ease, opacity 150ms ease;
+    }
+    .drawer-link:hover { background-color: rgb(var(--ink) / 0.06); opacity: 1; }
+    .drawer-link.active {
+        background-color: rgb(var(--chocolate));
+        color: rgb(var(--paper));
+        opacity: 1;
+    }
+    .drawer-link-accent { color: rgb(var(--blueberry)); }
+</style>
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+
+    private readonly (string Href, string Label, bool Accent)[] _items =
+    [
+        ("",           "Storefront", false),
+        ("orders",     "Orders",     false),
+        ("inventory",  "Inventory",  false),
+        ("production", "Production", false),
+        ("warehouse",  "Warehouse",  false),
+        ("recipes",    "Recipes",    false),
+        ("loyalty",    "Loyalty",    false),
+        ("supplier",   "Supplier",   false),
+        ("agents",     "Agents",     true),
+    ];
+
+    private string LinkClass(bool accent) => $"drawer-link {(accent ? "drawer-link-accent" : "")}";
+
+    private async Task Close()
+    {
+        if (OpenChanged.HasDelegate) await OpenChanged.InvokeAsync(false);
+    }
+}
