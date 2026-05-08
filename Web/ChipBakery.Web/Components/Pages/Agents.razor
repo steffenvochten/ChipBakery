@@ -7,151 +7,184 @@
 @inject TimezoneService TzService
 @implements IDisposable
 
-<PageTitle>Agents - Chip Bakery</PageTitle>
+<PageTitle>Agents · ChipBakery</PageTitle>
 
-<div class="space-y-8 animate-in fade-in duration-700">
+<div class="space-y-10 animate-fade-up">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+        <SectionHeader Eyebrow="the night shift"
+                       Subtitle="The kitchen runs itself. AI agents pick orders, restock the warehouse, and bake the queue.">
+            Agents
+        </SectionHeader>
 
-    <!-- Header -->
-    <div class="flex flex-wrap items-start justify-between gap-4">
-        <div>
-            <h1 class="text-4xl sm:text-5xl font-black tracking-tight text-bakery-crust dark:text-amber-400">
-                Agent Command
-            </h1>
-            <p class="text-lg text-bakery-crust/60 dark:text-stone-400 font-medium">
-                AI-driven agents running the bakery autonomously.
-            </p>
-        </div>
-
-        <!-- Connection badge -->
-        <div class="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold
-            @(ActivityClient.State == HubConnectionState.Connected
-                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                : ActivityClient.State == HubConnectionState.Reconnecting
-                    ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 animate-pulse"
-                    : "bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400")">
-            <span class="w-2 h-2 rounded-full
-                @(ActivityClient.State == HubConnectionState.Connected ? "bg-green-500"
-                  : ActivityClient.State == HubConnectionState.Reconnecting ? "bg-amber-500"
-                  : "bg-stone-400")"></span>
-            @(ActivityClient.State == HubConnectionState.Connected ? "Live"
-              : ActivityClient.State == HubConnectionState.Reconnecting ? "Reconnecting…"
-              : "Connecting…")
-        </div>
+        @* Connection status badge *@
+        <Stamp Color="@StatusColor" Glyph="@StatusGlyph">@StatusLabel</Stamp>
     </div>
 
-    <!-- Controls strip -->
-    <div class="glass-card p-4 flex flex-wrap items-center gap-4">
+    @* ===========================================================
+       Controls strip — chalkboard panel
+       =========================================================== *@
+    <div class="chalkboard-surface p-5 flex flex-wrap items-center gap-5">
         <div class="flex items-center gap-3">
-            <span class="text-xs font-black uppercase tracking-widest text-bakery-crust/50 dark:text-stone-500">Speed</span>
+            <Doodle Name="utensil-timer" Class="w-5 h-5 text-lemon" ViewBox="0 0 32 32" />
+            <span class="display-hand text-lg text-paper leading-none">speed</span>
             <input type="range" min="0.5" max="5" step="0.5"
                    value="@_speed"
                    @onchange="async e => { _speed = Convert.ToDouble(e.Value); await ApplySpeed(); }"
-                   class="w-28 accent-amber-500" />
-            <span class="text-sm font-black text-amber-600 dark:text-amber-400 w-8 tabular-nums">@_speed.ToString("0.#")×</span>
+                   class="w-32 accent-amber-400"
+                   aria-label="Agent speed" />
+            <span class="font-mono font-bold text-lemon w-10 tabular-nums">@_speed.ToString("0.#")×</span>
         </div>
         <div class="flex gap-2 ml-auto">
-            <button class="btn @(_isPaused ? "btn-primary" : "btn-outline") text-sm py-2 px-4"
+            <button type="button"
+                    class="btn @(_isPaused ? "btn-kraft" : "btn-outline") text-sm"
+                    style="@(_isPaused ? "" : "color: rgb(var(--paper)); border-color: rgb(var(--paper) / 0.5);")"
                     @onclick="TogglePause">
-                @(_isPaused ? "Resume" : "Pause")
+                @if (_isPaused)
+                {
+                    <Doodle Name="glyph-arrow-right" Class="w-4 h-4" ViewBox="0 0 24 24" />
+                    <span>Resume</span>
+                }
+                else
+                {
+                    <Doodle Name="glyph-clock" Class="w-4 h-4" ViewBox="0 0 24 24" />
+                    <span>Pause</span>
+                }
             </button>
-            <button class="btn btn-outline text-sm py-2 px-4" @onclick="ResetFeed">
+            <button type="button"
+                    class="btn btn-outline text-sm"
+                    style="color: rgb(var(--paper)); border-color: rgb(var(--paper) / 0.5);"
+                    @onclick="ResetFeed">
+                <Doodle Name="glyph-trash" Class="w-4 h-4" ViewBox="0 0 24 24" />
                 Clear
             </button>
         </div>
     </div>
 
-    <!-- Agent roster strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        @foreach (var agent in _roster)
-        {
-            <div class="glass-card p-4 flex flex-col items-center gap-2 text-center">
-                <div class="text-2xl">@agent.Icon</div>
-                <div class="font-black text-sm text-bakery-crust dark:text-stone-100 leading-tight">@agent.Name</div>
-                <div class="text-xs font-bold text-bakery-crust/50 dark:text-stone-500">@agent.Role</div>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold
-                    @(agent.Live ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-500")">
-                    <span class="w-1.5 h-1.5 rounded-full @(agent.Live ? "bg-green-500" : "bg-stone-400")"></span>
-                    @(agent.Live ? "Active" : "Coming soon")
-                </span>
-            </div>
-        }
-    </div>
+    @* ===========================================================
+       Agent roster — staff lockers
+       =========================================================== *@
+    <section class="space-y-5">
+        <div>
+            <div class="display-hand text-lg text-kraft leading-none mb-1">on shift</div>
+            <h2 class="font-serif font-bold text-2xl text-ink">The team</h2>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            @{ int i = 0; }
+            @foreach (var agent in _roster)
+            {
+                var rotateKey = $"agent-{i}"; i++;
+                <PaperCard RotateKey="@rotateKey" Tape="@TapeFor(agent.Type)" Class="text-center" Padding="p-4">
+                    <div class="text-3xl mb-2" aria-hidden="true">@agent.Icon</div>
+                    <div class="font-serif font-bold text-base text-ink leading-tight">@agent.Name</div>
+                    <div class="text-xs text-ink-muted mt-1">@agent.Role</div>
+                    <div class="mt-2 flex justify-center">
+                        @if (agent.Live)
+                        {
+                            <Stamp Color="BakeryColor.Basil" Glyph="glyph-check" RotateKey="@rotateKey" Class="text-xs">On</Stamp>
+                        }
+                        else
+                        {
+                            <Stamp Color="BakeryColor.Kraft" RotateKey="@rotateKey" Class="text-xs">Soon</Stamp>
+                        }
+                    </div>
+                </PaperCard>
+            }
+        </div>
+    </section>
 
-    <!-- Activity feed -->
-    <div class="glass-card overflow-hidden">
-        <div class="px-6 py-4 border-b border-bakery-crust/5 dark:border-white/5 flex items-center justify-between">
-            <h2 class="font-black text-lg text-bakery-crust dark:text-stone-100">Live Activity Feed</h2>
-            <span class="text-sm text-bakery-crust/40 dark:text-stone-500">
+    @* ===========================================================
+       Activity feed — bulletin board
+       =========================================================== *@
+    <section class="space-y-5">
+        <div class="flex items-baseline justify-between">
+            <div>
+                <div class="display-hand text-lg text-kraft leading-none mb-1">the bulletin board</div>
+                <h2 class="font-serif font-bold text-2xl text-ink">Live activity</h2>
+            </div>
+            <span class="text-sm text-ink-muted font-mono">
                 @ActivityClient.Activities.Count event@(ActivityClient.Activities.Count == 1 ? "" : "s")
             </span>
         </div>
 
-        <div class="divide-y divide-bakery-crust/5 dark:divide-white/5 max-h-[32rem] overflow-y-auto">
-            @if (!ActivityClient.Activities.Any())
-            {
-                <div class="p-16 text-center">
-                    <div class="flex flex-col items-center gap-4 opacity-30">
-                        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                        <p class="text-xl font-bold">Waiting for agent activity…</p>
-                    </div>
-                </div>
-            }
-            else
-            {
-                @foreach (var activity in ActivityClient.Activities)
+        <div class="paper-surface overflow-hidden">
+            <div class="max-h-[36rem] overflow-y-auto">
+                @if (ActivityClient.Activities.Count == 0)
                 {
-                    <div class="px-6 py-4 flex items-start gap-4 hover:bg-bakery-crust/3 dark:hover:bg-white/3 transition-colors animate-in fade-in duration-300">
-
-                        <!-- Agent type colour dot -->
-                        <div class="mt-1 w-2.5 h-2.5 rounded-full flex-shrink-0 @GetTypeDotClass(activity.AgentType)"></div>
-
-                        <div class="flex-1 min-w-0">
-                            <div class="flex flex-wrap items-center gap-2 mb-1">
-                                <span class="font-black text-sm text-bakery-crust dark:text-stone-100">
-                                    @activity.AgentName
-                                </span>
-                                <span class="px-2 py-0.5 rounded-full text-xs font-bold @GetTypeBadgeClass(activity.AgentType)">
-                                    @activity.AgentType
-                                </span>
-                                <span class="text-xs font-mono text-bakery-crust/30 dark:text-stone-600">
-                                    @activity.Action
-                                </span>
-                            </div>
-                            <p class="text-sm text-bakery-crust/70 dark:text-stone-300 italic">
-                                "@activity.Narration"
-                            </p>
-                        </div>
-
-                        <time class="text-xs font-mono text-bakery-crust/30 dark:text-stone-600 flex-shrink-0 mt-1">
-                            @TzService.FormatTime(activity.Timestamp)
-                        </time>
-                    </div>
+                    <EmptyState Doodle="utensil-timer" Headline="Nothing happening yet">
+                        Agents will start chattering as soon as orders flow in.
+                    </EmptyState>
                 }
-            }
+                else
+                {
+                    <ul class="divide-y" style="border-color: rgb(var(--ink) / 0.08);">
+                        @foreach (var activity in ActivityClient.Activities)
+                        {
+                            <li class="px-5 py-4 flex items-start gap-4 hover:bg-ink/3 transition-colors">
+                                <div class="mt-1 w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                     style="@TypeDotStyle(activity.AgentType)"
+                                     aria-hidden="true"></div>
+
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex flex-wrap items-center gap-2 mb-1">
+                                        <span class="font-serif font-bold text-sm text-ink">@activity.AgentName</span>
+                                        <Stamp Color="@TypeColor(activity.AgentType)" RotateKey="@activity.AgentType" Class="text-[0.65rem]">
+                                            @activity.AgentType
+                                        </Stamp>
+                                        <code class="font-mono text-xs text-ink-muted">@activity.Action</code>
+                                    </div>
+                                    <p class="text-sm text-ink-muted italic font-serif">"@activity.Narration"</p>
+                                </div>
+
+                                <time class="text-xs font-mono text-ink-muted flex-shrink-0 mt-1">
+                                    @TzService.FormatTime(activity.Timestamp)
+                                </time>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
         </div>
-    </div>
+    </section>
 </div>
 
 @code {
-    private record AgentCard(string Icon, string Name, string Role, bool Live);
+    private record AgentCard(string Icon, string Name, string Role, string Type, bool Live);
 
     private static readonly AgentCard[] _roster =
     [
-        new("🛒", "Sarah",            "Regular client",  true),
-        new("☕", "Marco",            "Café bulk-buyer", true),
-        new("🌸", "Lin",              "Curious newcomer",true),
-        new("🌾", "Acme Flour Co.",   "Flour supplier",  true),
-        new("🍬", "Sweet Sugar Inc.", "Sugar supplier",  true),
-        new("🥛", "Dairy Direct",     "Dairy supplier",  true),
-        new("📦", "Warehouse Mgr",    "Manager",         true),
-        new("🍞", "Baker",            "Baker",           true),
+        new("🛒", "Sarah",            "Regular client",     "Client",    true),
+        new("☕", "Marco",            "Café bulk-buyer",    "Client",    true),
+        new("🌸", "Lin",              "Curious newcomer",   "Client",    true),
+        new("🌾", "Acme Flour Co.",   "Flour supplier",     "Supplier",  true),
+        new("🍬", "Sweet Sugar Inc.", "Sugar supplier",     "Supplier",  true),
+        new("🥛", "Dairy Direct",     "Dairy supplier",     "Supplier",  true),
+        new("📦", "Warehouse Mgr",    "Manager",            "Warehouse", true),
+        new("🍞", "Baker",            "Baker",              "Baker",     true),
     ];
 
     private double _speed = 1.0;
-    private bool _isPaused = false;
+    private bool _isPaused;
+
+    private BakeryColor StatusColor => ActivityClient.State switch
+    {
+        HubConnectionState.Connected    => BakeryColor.Basil,
+        HubConnectionState.Reconnecting => BakeryColor.Lemon,
+        _                               => BakeryColor.Kraft,
+    };
+
+    private string StatusGlyph => ActivityClient.State switch
+    {
+        HubConnectionState.Connected    => "glyph-check",
+        HubConnectionState.Reconnecting => "glyph-clock",
+        _                               => "glyph-clock",
+    };
+
+    private string StatusLabel => ActivityClient.State switch
+    {
+        HubConnectionState.Connected    => "Live",
+        HubConnectionState.Reconnecting => "Reconnecting",
+        _                               => "Connecting",
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -173,21 +206,30 @@
 
     public void Dispose() => ActivityClient.OnChange -= OnActivityReceived;
 
-    private static string GetTypeDotClass(string type) => type switch
+    private static BakeryColor TypeColor(string type) => type switch
     {
-        "Client"    => "bg-pink-400",
-        "Supplier"  => "bg-amber-400",
-        "Warehouse" => "bg-blue-400",
-        "Baker"     => "bg-green-400",
-        _           => "bg-stone-400"
+        "Client"    => BakeryColor.Raspberry,
+        "Supplier"  => BakeryColor.Lemon,
+        "Warehouse" => BakeryColor.Blueberry,
+        "Baker"     => BakeryColor.Basil,
+        _           => BakeryColor.Kraft,
     };
 
-    private static string GetTypeBadgeClass(string type) => type switch
+    private static TapeColor TapeFor(string type) => type switch
     {
-        "Client"    => "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400",
-        "Supplier"  => "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-        "Warehouse" => "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-        "Baker"     => "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-        _           => "bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400"
+        "Client"    => TapeColor.Raspberry,
+        "Supplier"  => TapeColor.Lemon,
+        "Warehouse" => TapeColor.Default,
+        "Baker"     => TapeColor.Basil,
+        _           => TapeColor.Kraft,
+    };
+
+    private static string TypeDotStyle(string type) => type switch
+    {
+        "Client"    => "background-color: rgb(var(--raspberry));",
+        "Supplier"  => "background-color: rgb(var(--lemon));",
+        "Warehouse" => "background-color: rgb(var(--blueberry));",
+        "Baker"     => "background-color: rgb(var(--basil));",
+        _           => "background-color: rgb(var(--kraft));",
     };
 }
