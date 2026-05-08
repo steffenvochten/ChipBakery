@@ -10,46 +10,46 @@
    ----------------------------------------------------------- */
 @layer base {
   :root {
-    /* Light: Recipe Book */
-    --paper:       251 243 226; /* #fbf3e2 butter */
-    --paper-alt:   246 233 207; /* #f6e9cf cream  */
-    --kraft:       199 154 107; /* #c79a6b        */
-    --ink:          42  24  16; /* #2a1810 espresso text */
-    --ink-muted:   122  90  62; /* #7a5a3e        */
-    --chocolate:    74  44  26; /* #4a2c1a primary surface */
-    --raspberry:   198  66  66; /* #c64242 error  */
-    --basil:       106 141  79; /* #6a8d4f success */
-    --blueberry:    74  90 138; /* #4a5a8a info   */
-    --lemon:       244 200  66; /* #f4c842 warn   */
-    --tape:        244 217 179; /* #f4d9b3 washi  */
+    /* Light: Airy Bakery */
+    --paper:       255 255 255; /* Pure White */
+    --paper-alt:   253 250 245; /* #fdfaf5 very light cream */
+    --kraft:       240 220 200; /* #f0dcc8 soft sandy kraft */
+    --ink:          75  60  50; /* #4b3c32 soft warm charcoal */
+    --ink-muted:   145 130 115; /* #918273 muted soft brown */
+    --chocolate:   180 145 125; /* #b4917d soft milk tea/terracotta */
+    --raspberry:   235 155 155; /* #eb9b9b pastel red */
+    --basil:       165 195 155; /* #a5c39b pastel green (sage) */
+    --blueberry:   170 190 225; /* #aac2e1 pastel blue */
+    --lemon:       250 230 160; /* #fae6a0 pastel yellow */
+    --tape:        245 235 215; /* #f5ebd7 very soft washi */
 
-    /* Legacy aliases — kept so existing pages render until migrated */
-    --surface:     251 243 226;
-    --surface-alt: 246 233 207;
-    --text:         42  24  16;
-    --text-muted:  122  90  62;
-    --border: rgba(74, 44, 26, 0.15);
+    /* Legacy aliases */
+    --surface:     255 255 255;
+    --surface-alt: 253 250 245;
+    --text:         75  60  50;
+    --text-muted:  145 130 115;
+    --border: rgba(180, 145, 125, 0.2);
   }
 
   [data-theme='dark'] {
-    /* Dark: Night Shift */
-    --paper:        28  19  11; /* #1c130b deep espresso */
-    --paper-alt:    42  29  16; /* #2a1d10 cocoa  */
-    --kraft:       138 104  67; /* #8a6843        */
-    --ink:         251 243 226; /* #fbf3e2 butter text  */
-    --ink-muted:   202 169 124; /* #caa97c        */
-    --chocolate:   202 169 124; /* tungsten amber acts as primary in dark */
-    --raspberry:   224 123 123; /* #e07b7b        */
-    --basil:       155 191 125; /* #9bbf7d        */
-    --blueberry:   138 161 212; /* #8aa1d4        */
-    --lemon:       244 200  66; /* unchanged      */
-    --tape:        202 169 124; /* dim amber tape */
+    /* Dark: Soft Night */
+    --paper:        65  60  58; /* #413c3a warm soft charcoal */
+    --paper-alt:    80  75  72; /* #504b48 lighter charcoal */
+    --kraft:       160 145 130; /* #a09182 muted dark kraft */
+    --ink:         253 250 245; /* light text */
+    --ink-muted:   210 200 190; /* soft muted text */
+    --chocolate:   225 195 165; /* golden tan accent */
+    --raspberry:   245 185 185; /* soft red */
+    --basil:       195 220 185; /* soft green */
+    --blueberry:   200 215 245; /* soft blue */
+    --lemon:       250 230 160; /* same yellow */
+    --tape:        180 165 150; /* muted tape */
 
-    --surface:      28  19  11;
-    --surface-alt:  42  29  16;
-    --text:        251 243 226;
-    --text-muted:  202 169 124;
-    --border: rgba(202, 169, 124, 0.15);
+    --surface:      65  60  58;
+    --surface-alt:  80  75  72;
+    --text:        253 250 245;
+    --text-muted:  210 200 190;
+    --border: rgba(225, 195, 165, 0.15);
   }
 
   html, body {

@@ -29,7 +29,7 @@
             <span class="display-hand text-lg text-paper leading-none">speed</span>
             <input type="range" min="0.5" max="5" step="0.5"
                    value="@_speed"
-                   @onchange="async e => { _speed = Convert.ToDouble(e.Value); await ApplySpeed(); }"
+                   @oninput="HandleSpeedInput"
                    class="w-32 accent-amber-400"
                    aria-label="Agent speed" />
             <span class="font-mono font-bold text-lemon w-10 tabular-nums">@_speed.ToString("0.#")×</span>
@@ -193,6 +193,15 @@
     }
 
     private async void OnActivityReceived() => await InvokeAsync(StateHasChanged);
+
+    private async Task HandleSpeedInput(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var val))
+        {
+            _speed = Math.Clamp(val, 0.5, 5.0);
+            await ApplySpeed();
+        }
+    }
 
     private async Task ApplySpeed() => await ActivityClient.SetSpeedAsync(_speed);
 

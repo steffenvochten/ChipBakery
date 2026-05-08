@@ -1,0 +1,182 @@
+@page "/recipe-manager"
+@rendermode InteractiveServer
+@using ChipBakery.Shared
+@using ChipBakery.Web.Services
+@inject BakeryApiClient ApiClient
+
+<PageTitle>Recipe Manager · ChipBakery</PageTitle>
+
+<div class="max-w-4xl mx-auto space-y-10 animate-fade-up">
+    <SectionHeader Eyebrow="centralized kitchen"
+                   Subtitle="Design new products and their recipes. This will automatically set up the inventory, warehouse, and AI supplier agents.">
+        Recipe Manager
+    </SectionHeader>
+
+    <PaperCard Tape="TapeColor.Lemon" RotateKey="@("recipe-manager-card")">
+        <div class="display-hand text-xl text-kraft mb-2">product details</div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div>
+                <label class="form-label">Product Name</label>
+                <input class="form-control" placeholder="e.g. Chocolate Cake" @bind="_productName" />
+            </div>
+            <div>
+                <label class="form-label">Price ($)</label>
+                <input class="form-control font-mono" type="number" step="0.01" min="0.01" @bind="_productPrice" />
+            </div>
+        </div>
+
+        <div class="display-hand text-xl text-kraft mb-4">ingredients</div>
+        
+        <div class="space-y-3 mb-6">
+            @for (int i = 0; i < _ingredients.Count; i++)
+            {
+                var idx = i;
+                var ing = _ingredients[idx];
+                <div class="flex flex-col sm:flex-row gap-3 sm:items-end p-4 rounded-2xl bg-kraft/5 border border-kraft/10">
+                    <div class="flex-1">
+                        @if (idx == 0) { <label class="form-label">Ingredient Name</label> }
+                        <input class="form-control" placeholder="e.g. Cocoa Powder" @bind="ing.Name" />
+                    </div>
+                    <div class="w-full sm:w-28">
+                        @if (idx == 0) { <label class="form-label">Quantity</label> }
+                        <input class="form-control font-mono" type="number" step="0.001" min="0.001" @bind="ing.Quantity" />
+                    </div>
+                    <div class="w-full sm:w-24">
+                        @if (idx == 0) { <label class="form-label">Unit</label> }
+                        <input class="form-control" placeholder="kg" @bind="ing.Unit" />
+                    </div>
+                    <button type="button" 
+                            class="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl hover:bg-raspberry/15 transition-colors text-raspberry mb-0.5"
+                            @onclick="() => RemoveIngredient(idx)">
+                        <Doodle Name="glyph-trash" Class="w-5 h-5" />
+                    </button>
+                </div>
+            }
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-kraft/10">
+            <PaperButton Variant="ButtonVariant.Outline" 
+                         Size="BakerySize.Sm" 
+                         Glyph="glyph-plus" 
+                         OnClick="AddIngredient">
+                Add Ingredient
+            </PaperButton>
+
+            <div class="flex items-center gap-3">
+                @if (!string.IsNullOrEmpty(_error))
+                {
+                    <span class="text-sm font-bold text-raspberry animate-shake">@_error</span>
+                }
+                <PaperButton Variant="ButtonVariant.Chocolate" 
+                             Loading="_isSaving" 
+                             OnClick="Submit">
+                    Create Product & Recipe
+                </PaperButton>
+            </div>
+        </div>
+    </PaperCard>
+    
+    @if (_successResult is not null)
+    {
+        <div class="animate-bounce-in">
+            <PaperCard Tape="TapeColor.Basil" RotateKey="@("success-card")">
+                <div class="flex items-center gap-4">
+                    <Stamp Color="BakeryColor.Basil" Glyph="glyph-check">Success</Stamp>
+                    <div>
+                        <h4 class="font-bold text-ink text-lg">Product Created!</h4>
+                        <p class="text-ink-muted text-sm">@_successResult.Message</p>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-ink/5 text-xs text-ink-muted italic">
+                    Note: AI Suppliers are being contacted to manage the new ingredients...
+                </div>
+            </PaperCard>
+        </div>
+    }
+</div>
+
+<Toast @bind-Message="_toast" Variant="_toastVariant" />
+
+@code {
+    private string _productName = "";
+    private decimal _productPrice = 5.00m;
+    private List<EditIngredient> _ingredients = new() { new EditIngredient { Name = "", Quantity = 0.1m, Unit = "kg" } };
+    
+    private bool _isSaving;
+    private string? _error;
+    private RecipeOrchestrationResponse? _successResult;
+    
+    private string? _toast;
+    private Toast.ToastVariant _toastVariant = Toast.ToastVariant.Success;
+
+    private void AddIngredient() => _ingredients.Add(new EditIngredient { Name = "", Quantity = 0.1m, Unit = "kg" });
+    private void RemoveIngredient(int idx)
+    {
+        if (_ingredients.Count > 1) _ingredients.RemoveAt(idx);
+    }
+
+    private async Task Submit()
+    {
+        if (string.IsNullOrWhiteSpace(_productName))
+        {
+            _error = "Product name is required.";
+            return;
+        }
+
+        if (_ingredients.Any(i => string.IsNullOrWhiteSpace(i.Name) || i.Quantity <= 0 || string.IsNullOrWhiteSpace(i.Unit)))
+        {
+            _error = "All ingredients must have a name, quantity, and unit.";
+            return;
+        }
+
+        _isSaving = true;
+        _error = null;
+        _successResult = null;
+
+        try
+        {
+            var req = new CreateRecipeOrchestrationRequest(
+                _productName, 
+                _productPrice, 
+                _ingredients.Select(i => new ChipBakery.Shared.IngredientRequirement(i.Name, i.Quantity, i.Unit)).ToList());
+            
+            var result = await ApiClient.OrchestrateRecipeCreationAsync(req);
+            
+            if (result.Success)
+            {
+                _successResult = result;
+                _toast = $"Successfully created {_productName}!";
+                _toastVariant = Toast.ToastVariant.Success;
+                
+                // Reset form
+                _productName = "";
+                _productPrice = 5.00m;
+                _ingredients = new() { new EditIngredient { Name = "", Quantity = 0.1m, Unit = "kg" } };
+            }
+            else
+            {
+                _error = result.Message;
+                _toast = "Orchestration failed.";
+                _toastVariant = Toast.ToastVariant.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = $"An unexpected error occurred: {ex.Message}";
+            _toast = "Error during submission.";
+            _toastVariant = Toast.ToastVariant.Error;
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private class EditIngredient
+    {
+        public string Name { get; set; } = "";
+        public decimal Quantity { get; set; }
+        public string Unit { get; set; } = "";
+    }
+}

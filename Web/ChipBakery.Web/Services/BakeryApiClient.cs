@@ -201,6 +201,22 @@ public class BakeryApiClient(IHttpClientFactory httpClientFactory)
             ?? throw new InvalidOperationException("Empty response from server.");
     }
 
+    // ─── Catalog (Orchestration) ───────────────────────────────────────────
+
+    public async Task<RecipeOrchestrationResponse> OrchestrateRecipeCreationAsync(CreateRecipeOrchestrationRequest request)
+    {
+        var client = httpClientFactory.CreateClient("Catalog");
+        var response = await client.PostAsJsonAsync("/api/catalog/recipes", request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadFromJsonAsync<RecipeOrchestrationResponse>()
+                ?? new RecipeOrchestrationResponse(false, "Unknown error", null);
+        }
+
+        return new RecipeOrchestrationResponse(false, $"Orchestration failed with status: {response.StatusCode}", null);
+    }
+
     // ─── Loyalty ────────────────────────────────────────────────────────────
 
     public async Task<CustomerLoyalty?> GetCustomerLoyaltyAsync(Guid customerId)

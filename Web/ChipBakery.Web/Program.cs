@@ -9,12 +9,19 @@ builder.AddServiceDefaults();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddSignalR(options =>
+{
+    options.KeepAliveInterval = TimeSpan.FromSeconds(10);
+    options.HandshakeTimeout = TimeSpan.FromSeconds(20);
+});
+
 builder.Services.AddHttpClient("Inventory", client => client.BaseAddress = new Uri("https://inventory-service"));
 builder.Services.AddHttpClient("Order", client => client.BaseAddress = new Uri("https://order-service"));
 builder.Services.AddHttpClient("Warehouse", client => client.BaseAddress = new Uri("https://warehouse-service"));
 builder.Services.AddHttpClient("Loyalty", client => client.BaseAddress = new Uri("https://loyalty-service"));
 builder.Services.AddHttpClient("Production", client => client.BaseAddress = new Uri("https://production-service"));
 builder.Services.AddHttpClient("Supplier", c => c.BaseAddress = new Uri("https://supplier-service"));
+builder.Services.AddHttpClient("Catalog", client => client.BaseAddress = new Uri("https://catalog-service"));
 builder.Services.AddScoped<BakeryApiClient>();
 builder.Services.AddScoped<TimezoneService>();
 builder.Services.AddSingleton<AgentActivityClient>();
