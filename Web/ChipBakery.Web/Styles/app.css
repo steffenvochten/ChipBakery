@@ -2,93 +2,299 @@
 @tailwind components;
 @tailwind utilities;
 
+/* -----------------------------------------------------------
+   Design tokens
+   - Color values are stored as `R G B` triplets so that
+     Tailwind's `rgb(var(--token) / <alpha-value>)` pattern
+     and arbitrary `bg-paper/40` work in both themes.
+   ----------------------------------------------------------- */
 @layer base {
   :root {
-    --surface: #fffbeb; /* bakery-cream */
-    --surface-alt: #fefce8; /* bakery-pastel-yellow */
-    --text: #451a03; /* stone-900 / dark brown */
-    --text-muted: #78350f; /* bakery-crust */
-    --border: rgba(120, 53, 15, 0.1);
+    /* Light: Recipe Book */
+    --paper:       251 243 226; /* #fbf3e2 butter */
+    --paper-alt:   246 233 207; /* #f6e9cf cream  */
+    --kraft:       199 154 107; /* #c79a6b        */
+    --ink:          42  24  16; /* #2a1810 espresso text */
+    --ink-muted:   122  90  62; /* #7a5a3e        */
+    --chocolate:    74  44  26; /* #4a2c1a primary surface */
+    --raspberry:   198  66  66; /* #c64242 error  */
+    --basil:       106 141  79; /* #6a8d4f success */
+    --blueberry:    74  90 138; /* #4a5a8a info   */
+    --lemon:       244 200  66; /* #f4c842 warn   */
+    --tape:        244 217 179; /* #f4d9b3 washi  */
+
+    /* Legacy aliases — kept so existing pages render until migrated */
+    --surface:     251 243 226;
+    --surface-alt: 246 233 207;
+    --text:         42  24  16;
+    --text-muted:  122  90  62;
+    --border: rgba(74, 44, 26, 0.15);
   }
 
   [data-theme='dark'] {
-    --surface: #1c1917; /* stone-900 */
-    --surface-alt: #0c0a09; /* stone-950 */
-    --text: #fef3c7; /* bakery-dough */
-    --text-muted: #d97706; /* amber-600 */
-    --border: rgba(251, 191, 36, 0.1);
+    /* Dark: Night Shift */
+    --paper:        28  19  11; /* #1c130b deep espresso */
+    --paper-alt:    42  29  16; /* #2a1d10 cocoa  */
+    --kraft:       138 104  67; /* #8a6843        */
+    --ink:         251 243 226; /* #fbf3e2 butter text  */
+    --ink-muted:   202 169 124; /* #caa97c        */
+    --chocolate:   202 169 124; /* tungsten amber acts as primary in dark */
+    --raspberry:   224 123 123; /* #e07b7b        */
+    --basil:       155 191 125; /* #9bbf7d        */
+    --blueberry:   138 161 212; /* #8aa1d4        */
+    --lemon:       244 200  66; /* unchanged      */
+    --tape:        202 169 124; /* dim amber tape */
+
+    --surface:      28  19  11;
+    --surface-alt:  42  29  16;
+    --text:        251 243 226;
+    --text-muted:  202 169 124;
+    --border: rgba(202, 169, 124, 0.15);
   }
 
   html, body {
-    @apply m-0 p-0 font-sans transition-colors duration-300 antialiased;
-    background-color: var(--surface-alt);
-    color: var(--text);
+    @apply m-0 p-0 font-sans antialiased;
+    background-color: rgb(var(--paper));
+    color: rgb(var(--ink));
+    transition: background-color 300ms ease, color 300ms ease;
   }
 
-  /* Cute bakery texture background */
+  /* Paper grain — fractal noise filter, tinted to the substrate.
+     Lower opacity in light, slightly higher in dark for visibility. */
   body::before {
     content: "";
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     z-index: -1;
-    opacity: 0.03;
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2378350f' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM34 4V0h-2v4h-4v2h4v4h2V6h4V4h-4zM4 4V0H2v4H0v2h4v4h2V6h4V4H4z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+    opacity: 0.55;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.16  0 0 0 0 0.09  0 0 0 0 0.06  0 0 0 0.06 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
   }
-
   [data-theme='dark'] body::before {
-    opacity: 0.05;
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23fef3c7' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM34 4V0h-2v4h-4v2h4v4h2V6h4V4h-4zM4 4V0H2v4H0v2h4v4h2V6h4V4H4z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.7;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.98  0 0 0 0 0.95  0 0 0 0 0.88  0 0 0 0.05 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif font-bold mt-0 leading-tight;
-    color: var(--text);
+    color: rgb(var(--ink));
+    letter-spacing: -0.01em;
+  }
+
+  /* Long-form, decorative headings can opt into the hand-lettered display face */
+  .display-hand {
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  /* Selection — warm highlighter feel */
+  ::selection {
+    background-color: rgb(var(--lemon) / 0.55);
+    color: rgb(var(--ink));
   }
 }
 
 @layer components {
-  /* Cute modern buttons */
+  /* ---------- Surfaces ---------- */
+  .paper-surface {
+    background-color: rgb(var(--paper-alt));
+    color: rgb(var(--ink));
+    @apply rounded-3xl;
+    box-shadow: 0 1px 2px rgb(var(--ink) / 0.06), 0 4px 14px rgb(var(--ink) / 0.05);
+    border: 1px solid rgb(var(--ink) / 0.06);
+  }
+
+  .kraft-surface {
+    background-color: rgb(var(--kraft) / 0.92);
+    color: rgb(var(--paper));
+    @apply rounded-2xl;
+  }
+
+  .chalkboard-surface {
+    background-color: rgb(var(--chocolate));
+    color: rgb(var(--paper));
+    @apply rounded-2xl;
+    background-image:
+      linear-gradient(rgb(var(--paper) / 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(var(--paper) / 0.02) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Backwards-compat alias for the old glass-card pattern */
+  .glass-card {
+    background-color: rgb(var(--paper-alt));
+    color: rgb(var(--ink));
+    @apply rounded-3xl;
+    box-shadow: 0 1px 2px rgb(var(--ink) / 0.06), 0 4px 14px rgb(var(--ink) / 0.05);
+    border: 1px solid rgb(var(--ink) / 0.06);
+  }
+
+  /* ---------- Buttons ---------- */
   .btn {
-    @apply inline-flex items-center justify-center px-6 py-2.5 font-sans font-bold text-sm rounded-2xl border-none cursor-pointer transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95;
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-sans font-bold text-sm rounded-2xl border-none cursor-pointer transition-[transform,box-shadow,background-color,color] duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
-  .btn-primary {
-    @apply bg-bakery-crust text-bakery-dough shadow-sm hover:bg-stone-900 hover:shadow-md hover:-translate-y-0.5;
+  .btn-chocolate {
+    background-color: rgb(var(--chocolate));
+    color: rgb(var(--paper));
+    box-shadow: 3px 4px 0 rgb(var(--ink) / 0.18);
   }
+  .btn-chocolate:hover  { transform: translate(-1px, -1px); box-shadow: 4px 5px 0 rgb(var(--ink) / 0.22); }
+  .btn-chocolate:active { transform: translate(2px, 2px);   box-shadow: 1px 2px 0 rgb(var(--ink) / 0.16); }
 
-  .btn-accent {
-    @apply bg-amber-500 text-stone-900 shadow-sm hover:bg-amber-400 hover:shadow-md hover:-translate-y-0.5;
+  .btn-kraft {
+    background-color: rgb(var(--kraft));
+    color: rgb(var(--paper));
+    box-shadow: 3px 4px 0 rgb(var(--ink) / 0.16);
   }
+  .btn-kraft:hover  { transform: translate(-1px, -1px); }
+  .btn-kraft:active { transform: translate(2px, 2px); box-shadow: 1px 2px 0 rgb(var(--ink) / 0.12); }
 
   .btn-outline {
-    @apply bg-transparent border border-bakery-crust/20 text-bakery-crust hover:bg-bakery-crust/5;
+    @apply bg-transparent;
+    border: 2px solid rgb(var(--ink) / 0.5);
+    color: rgb(var(--ink));
   }
+  .btn-outline:hover { background-color: rgb(var(--ink) / 0.06); }
+
+  .btn-ghost {
+    @apply bg-transparent;
+    color: rgb(var(--ink));
+  }
+  .btn-ghost:hover { background-color: rgb(var(--ink) / 0.06); }
 
   .btn-danger {
-    @apply bg-transparent border border-red-200 text-red-600 hover:bg-red-50;
+    background-color: rgb(var(--raspberry));
+    color: rgb(var(--paper));
+    box-shadow: 3px 4px 0 rgb(var(--ink) / 0.18);
   }
+  .btn-danger:hover  { transform: translate(-1px, -1px); }
+  .btn-danger:active { transform: translate(2px, 2px); box-shadow: 1px 2px 0 rgb(var(--ink) / 0.16); }
 
-  /* Minimal inputs */
+  /* Legacy aliases */
+  .btn-primary { @apply btn-chocolate; }
+  .btn-accent  { @apply btn-kraft; }
+
+  /* ---------- Form controls ---------- */
   .form-control {
-    @apply w-full px-4 py-2.5 font-sans text-sm rounded-xl transition-all duration-300 border border-bakery-crust/10 bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-bakery-crust/20 focus:border-bakery-crust/30;
-    color: var(--text);
+    @apply w-full px-4 py-2.5 font-sans text-sm rounded-xl transition-all duration-200;
+    background-color: rgb(var(--paper) / 0.65);
+    border: 1.5px solid rgb(var(--ink) / 0.18);
+    color: rgb(var(--ink));
   }
+  .form-control:focus {
+    @apply outline-none;
+    border-color: rgb(var(--chocolate));
+    box-shadow: 0 0 0 3px rgb(var(--chocolate) / 0.18);
+    background-color: rgb(var(--paper));
+  }
+  .form-control::placeholder { color: rgb(var(--ink-muted) / 0.6); }
 
   .form-label {
-    @apply block mb-1.5 font-bold text-xs uppercase tracking-wider opacity-70;
-    color: var(--text);
+    @apply block mb-1.5 font-sans font-bold text-xs uppercase tracking-widest;
+    color: rgb(var(--ink-muted));
   }
 
-  /* Glassmorphism containers */
-  .glass-card {
-    @apply bg-white/40 dark:bg-stone-900/40 backdrop-blur-md border border-white/20 dark:border-white/5 rounded-3xl shadow-sm;
+  /* Ruled-line input — like a fill-in line on a recipe card */
+  .form-ruled {
+    @apply w-full px-1 py-1.5 font-sans text-sm bg-transparent border-0 border-b-2 transition-colors duration-200;
+    border-bottom-color: rgb(var(--ink) / 0.3);
+    border-bottom-style: dashed;
+    color: rgb(var(--ink));
+  }
+  .form-ruled:focus {
+    @apply outline-none;
+    border-bottom-color: rgb(var(--chocolate));
+    border-bottom-style: solid;
   }
 
-  /* Status Badges */
+  /* ---------- Badges & stamps ---------- */
   .badge {
     @apply inline-flex items-center px-3 py-1 rounded-full text-[0.7rem] font-bold uppercase tracking-widest;
+  }
+
+  .stamp {
+    @apply inline-flex items-center px-2.5 py-0.5 font-display font-bold text-base uppercase;
+    letter-spacing: 0.04em;
+    border: 2.25px solid currentColor;
+    border-radius: 6px;
+    box-shadow: inset 0 0 0 1px currentColor;
+    line-height: 1.15;
+  }
+
+  .stamp-basil    { color: rgb(var(--basil));    background-color: rgb(var(--basil) / 0.08); }
+  .stamp-raspberry{ color: rgb(var(--raspberry));background-color: rgb(var(--raspberry) / 0.08); }
+  .stamp-blueberry{ color: rgb(var(--blueberry));background-color: rgb(var(--blueberry) / 0.08); }
+  .stamp-lemon    { color: rgb(var(--ink));      background-color: rgb(var(--lemon) / 0.4); }
+  .stamp-kraft    { color: rgb(var(--kraft));    background-color: rgb(var(--kraft) / 0.10); }
+  .stamp-chocolate{ color: rgb(var(--chocolate));background-color: rgb(var(--chocolate) / 0.08); }
+
+  /* ---------- Decorations ---------- */
+  /* Washi-tape strip: drop on a card via class composition.
+     The card needs `position: relative` and `overflow: visible` */
+  .tape-strip {
+    position: absolute;
+    height: 22px;
+    background-color: rgb(var(--tape) / 0.7);
+    box-shadow: 0 2px 4px rgb(var(--ink) / 0.10);
+    border-left: 1px dashed rgb(var(--ink) / 0.2);
+    border-right: 1px dashed rgb(var(--ink) / 0.2);
+  }
+  .tape-strip-lemon    { background-color: rgb(var(--lemon) / 0.55); }
+  .tape-strip-basil    { background-color: rgb(var(--basil) / 0.45); }
+  .tape-strip-raspberry{ background-color: rgb(var(--raspberry) / 0.45); }
+  .tape-strip-kraft    { background-color: rgb(var(--kraft) / 0.55); }
+
+  /* Sketch-style dashed underline used by SectionHeader */
+  .underline-sketch {
+    position: relative;
+    padding-bottom: 0.4rem;
+  }
+  .underline-sketch::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 30%;
+    bottom: 0;
+    height: 4px;
+    background-image: linear-gradient(90deg, currentColor 50%, transparent 50%);
+    background-size: 10px 2px;
+    background-repeat: repeat-x;
+    background-position: 0 100%;
+    opacity: 0.55;
+  }
+
+  /* Note shadow — for Sticky-note style tiles */
+  .note-shadow {
+    box-shadow: 4px 5px 0 rgb(var(--ink) / 0.10);
+  }
+}
+
+@layer utilities {
+  /* Deterministic wobble — chosen by C# RotationSeed(id) % 7. */
+  @media (prefers-reduced-motion: no-preference) {
+    .wobble-0 { transform: rotate(-1.4deg); }
+    .wobble-1 { transform: rotate(0.8deg);  }
+    .wobble-2 { transform: rotate(-0.6deg); }
+    .wobble-3 { transform: rotate(1.2deg);  }
+    .wobble-4 { transform: rotate(-1deg);   }
+    .wobble-5 { transform: rotate(0.4deg);  }
+    .wobble-6 { transform: rotate(-2deg);   }
+  }
+  /* For prefers-reduced-motion users, rotations flatten automatically */
+
+  @media (prefers-reduced-motion: no-preference) {
+    .hover-lift {
+      transition: transform 200ms ease, box-shadow 200ms ease;
+    }
+    .hover-lift:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgb(var(--ink) / 0.12);
+    }
+  }
+
+  /* Reduced-transparency users get a flatter substrate for performance */
+  @media (prefers-reduced-transparency: reduce) {
+    body::before { display: none; }
   }
 }
