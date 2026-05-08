@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net.Http.Json;
 using Agents.Service.Brain;
 using Agents.Service.Hubs;
@@ -19,35 +20,58 @@ public class SupplierAgentWorker(
     IServiceProvider services,
     IAgentBrain brain,
     AgentSettings settings,
+    ISupplierManager supplierManager,
     IOptionsMonitor<SupplierAgentOptions> optionsMonitor,
     IHubContext<AgentActivityHub> hub,
     ILogger<SupplierAgentWorker> logger) : BackgroundService
 {
-    private sealed record SupplierPersona(
-        string Name,
-        string SystemPrompt,
-        string[] Keywords,
-        decimal LowThreshold,
-        decimal DefaultRestockQty,
-        TimeSpan Interval);
+    private readonly ConcurrentDictionary<string, Task> _activeLoops = new();
+    private CancellationTokenSource? _stoppingCts;
 
-    private SupplierPersona[] LoadPersonas() =>
-        optionsMonitor.CurrentValue.Suppliers
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        _stoppingCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+        var ct = _stoppingCts.Token;
+
+        // 1. Seed from config
+        var initialPersonas = optionsMonitor.CurrentValue.Suppliers
             .Select(c => new SupplierPersona(
                 c.Name,
                 c.SystemPrompt,
                 c.Keywords,
                 c.LowThreshold,
                 c.DefaultRestockQty,
-                TimeSpan.FromSeconds(c.IntervalSeconds)))
-            .ToArray();
+                TimeSpan.FromSeconds(c.IntervalSeconds)));
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        foreach (var p in initialPersonas)
+        {
+            supplierManager.RegisterSupplier(p);
+        }
+
+        // 2. Start existing ones
+        foreach (var p in supplierManager.GetActiveSuppliers())
+        {
+            StartLoop(p, ct);
+        }
+
+        // 3. Listen for new ones
+        supplierManager.OnSupplierRegistered += (p) => StartLoop(p, ct);
+
+        logger.LogInformation("SupplierAgentWorker started");
+        
+        // Wait until cancellation
+        try { await Task.Delay(Timeout.Infinite, stoppingToken); }
+        catch (OperationCanceledException) { }
+    }
+
+    private void StartLoop(SupplierPersona persona, CancellationToken ct)
     {
-        var personas = LoadPersonas();
-        logger.LogInformation("SupplierAgentWorker started ({Count} agents)", personas.Length);
-        var tasks = personas.Select((p, i) => RunLoopAsync(p, startDelay: i * 7 + 12, stoppingToken));
-        await Task.WhenAll(tasks);
+        if (_activeLoops.TryAdd(persona.Name, null!))
+        {
+            var task = RunLoopAsync(persona, startDelay: _activeLoops.Count * 7 + 12, ct);
+            _activeLoops[persona.Name] = task;
+            logger.LogInformation("Started loop for new supplier: {Name}", persona.Name);
+        }
     }
 
     private async Task RunLoopAsync(SupplierPersona persona, int startDelay, CancellationToken ct)

@@ -200,6 +200,17 @@ public static class BakingJobStatus
 /// <summary>Request body for POST /api/inventory/{id}/restock.</summary>
 public record AddInventoryStockRequest(int Quantity);
 
+// ─── Catalog (Orchestration) ───────────────────────────────────────────
+
+public record IngredientRequirement(string Name, decimal Quantity, string Unit);
+
+public record CreateRecipeOrchestrationRequest(
+    string ProductName,
+    decimal ProductPrice,
+    List<IngredientRequirement> Ingredients);
+
+public record RecipeOrchestrationResponse(bool Success, string Message, Guid? ProductId);
+
 // ─── Agent Activity ───────────────────────────────────────────────────────────
 
 /// <summary>
