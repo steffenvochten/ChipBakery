@@ -20,13 +20,5 @@ public interface IInventoryClient
     /// On failure, <see cref="InventoryDeductResult.Success"/> is false and
     /// <see cref="InventoryDeductResult.ErrorMessage"/> contains the reason.
     /// </returns>
-    /// <remarks>
-    /// TODO: Replace MockInventoryClient with HttpInventoryClient in Order.Infrastructure/Clients/.
-    /// 1. Create HttpInventoryClient : IInventoryClient
-    /// 2. Inject IHttpClientFactory, use the "Inventory" named client (registered in Program.cs)
-    /// 3. Call POST /api/inventory/deduct with OrderRequest (ChipBakery.Shared)
-    /// 4. Call GET /api/inventory/{id} to retrieve unit price
-    /// 5. Swap registration in Order.Infrastructure/DependencyInjection.cs
-    /// </remarks>
     Task<InventoryDeductResult> DeductStockAsync(Guid productId, int quantity, CancellationToken ct = default);
 }
